@@ -15,6 +15,10 @@ run/main_scene="uid://dstmujk5bvtf1"
 config/features=PackedStringArray("4.6", "GL Compatibility")
 config/icon="res://icon.svg"
 
+[autoload]
+
+VirtuMachineInput="*uid://bfecnhdbv5245"
+
 [display]
 
 window/size/viewport_width=1280

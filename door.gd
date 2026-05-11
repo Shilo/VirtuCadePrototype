@@ -22,7 +22,7 @@ func _use(player: Player, target_door: Door):
 		return
 	
 	if not player:
-		push_warning("[Door %s] Player is null." % self)
+		push_error("[VirtuMachine " + str(self) + "] Player is null.")
 		return
 	
 	player.global_position = target_door.global_position

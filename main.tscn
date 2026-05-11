@@ -6,6 +6,7 @@
 [ext_resource type="PackedScene" uid="uid://61td2etp34mc" path="res://map.tscn" id="4_1bvp3"]
 [ext_resource type="PackedScene" uid="uid://cs08r5tcyhxyn" path="res://player.tscn" id="5_lquwl"]
 [ext_resource type="PackedScene" uid="uid://f4ur7hqkkmey" path="res://door.tscn" id="6_7mycd"]
+[ext_resource type="PackedScene" uid="uid://bxdvyu16jsbmf" path="res://virtu_machine.tscn" id="7_272bh"]
 
 [node name="Main" type="Control" unique_id=1277039837]
 layout_mode = 3
@@ -121,6 +122,10 @@ texture = ExtResource("3_1bvp3")
 [node name="Map" parent="World" unique_id=266181050 instance=ExtResource("4_1bvp3")]
 
 [node name="Player" parent="World" unique_id=1073347646 instance=ExtResource("5_lquwl")]
+
+[node name="VirtuMachine" parent="World" unique_id=2116744642 instance=ExtResource("7_272bh")]
+position = Vector2(40, 1)
+target_name = "screensaver"
 
 [node name="Door" parent="World" unique_id=1431310349 node_paths=PackedStringArray("use_door", "down_door") instance=ExtResource("6_7mycd")]
 position = Vector2(-176, -112)
