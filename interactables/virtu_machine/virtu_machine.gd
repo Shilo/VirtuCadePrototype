@@ -11,7 +11,7 @@ func use(player: Player):
 		push_error("[" + str(self) + "] Player is null.")
 		return
 	
-	var target_path := "virtu_machine/" + target_name + "/" + target_name + ".tscn"
+	var target_path := VirtuMachineManager.get_virtu_machine_scene_path(target_name)
 	if not ResourceLoader.exists(target_path):
 		push_error("[" + str(self) + "] Scene doesn't exist \"" + target_path + "\".")
 		return

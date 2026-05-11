@@ -17,7 +17,7 @@ config/icon="res://icon.svg"
 
 [autoload]
 
-VirtuMachineInput="*uid://bfecnhdbv5245"
+VirtuMachineManager="*uid://bfecnhdbv5245"
 
 [display]
 

@@ -1,12 +1,11 @@
 [gd_scene format=3 uid="uid://dstmujk5bvtf1"]
 
-[ext_resource type="Texture2D" uid="uid://bvamry6nm2hut" path="res://icon.svg" id="1_ig7tw"]
-[ext_resource type="Script" uid="uid://tc2bsncndqg2" path="res://virtu_menu_button.gd" id="2_0xm2m"]
-[ext_resource type="Texture2D" uid="uid://nxkv4nmu3jiu" path="res://background.png" id="3_1bvp3"]
-[ext_resource type="PackedScene" uid="uid://61td2etp34mc" path="res://map.tscn" id="4_1bvp3"]
-[ext_resource type="PackedScene" uid="uid://cs08r5tcyhxyn" path="res://player.tscn" id="5_lquwl"]
-[ext_resource type="PackedScene" uid="uid://f4ur7hqkkmey" path="res://door.tscn" id="6_7mycd"]
-[ext_resource type="PackedScene" uid="uid://bxdvyu16jsbmf" path="res://virtu_machine.tscn" id="7_272bh"]
+[ext_resource type="PackedScene" uid="uid://ckpxkiuns3i53" path="res://ui/ui.tscn" id="1_7mycd"]
+[ext_resource type="Texture2D" uid="uid://nxkv4nmu3jiu" path="res://world/map/background.png" id="3_1bvp3"]
+[ext_resource type="PackedScene" uid="uid://61td2etp34mc" path="res://world/map/map.tscn" id="4_1bvp3"]
+[ext_resource type="PackedScene" uid="uid://cs08r5tcyhxyn" path="res://world/player/player.tscn" id="5_lquwl"]
+[ext_resource type="PackedScene" uid="uid://f4ur7hqkkmey" path="res://interactables/door/door.tscn" id="6_7mycd"]
+[ext_resource type="PackedScene" uid="uid://bxdvyu16jsbmf" path="res://interactables/virtu_machine/virtu_machine.tscn" id="7_272bh"]
 
 [node name="Main" type="Control" unique_id=1277039837]
 layout_mode = 3
@@ -16,96 +15,7 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="UI" type="CanvasLayer" parent="." unique_id=1913922255]
-
-[node name="MarginContainer" type="MarginContainer" parent="UI" unique_id=325340764]
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-theme_override_constants/margin_left = 10
-theme_override_constants/margin_top = 10
-theme_override_constants/margin_right = 10
-theme_override_constants/margin_bottom = 10
-
-[node name="Control" type="Control" parent="UI/MarginContainer" unique_id=210508729]
-layout_mode = 2
-
-[node name="HBoxContainer" type="HBoxContainer" parent="UI/MarginContainer/Control" unique_id=1687642687]
-layout_mode = 1
-anchors_preset = 3
-anchor_left = 1.0
-anchor_top = 1.0
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_left = -40.0
-offset_top = -40.0
-grow_horizontal = 0
-grow_vertical = 0
-
-[node name="StoreMenuButton" type="MenuButton" parent="UI/MarginContainer/Control/HBoxContainer" unique_id=1361119965]
-layout_mode = 2
-text = "Store"
-icon = ExtResource("1_ig7tw")
-flat = false
-icon_alignment = 1
-vertical_icon_alignment = 0
-expand_icon = true
-script = ExtResource("2_0xm2m")
-metadata/_custom_type_script = "uid://tc2bsncndqg2"
-
-[node name="CharacterMenuButton" type="MenuButton" parent="UI/MarginContainer/Control/HBoxContainer" unique_id=1690928336]
-layout_mode = 2
-text = "Character"
-icon = ExtResource("1_ig7tw")
-flat = false
-icon_alignment = 1
-vertical_icon_alignment = 0
-expand_icon = true
-script = ExtResource("2_0xm2m")
-metadata/_custom_type_script = "uid://tc2bsncndqg2"
-
-[node name="SystemMenuButton" type="MenuButton" parent="UI/MarginContainer/Control/HBoxContainer" unique_id=220522351]
-layout_mode = 2
-text = "System"
-icon = ExtResource("1_ig7tw")
-flat = false
-icon_alignment = 1
-vertical_icon_alignment = 0
-expand_icon = true
-item_count = 3
-popup/item_0/text = "Settings"
-popup/item_0/id = 0
-popup/item_1/id = 2
-popup/item_1/separator = true
-popup/item_2/text = "Exit"
-popup/item_2/id = 1
-script = ExtResource("2_0xm2m")
-metadata/_custom_type_script = "uid://tc2bsncndqg2"
-
-[node name="SubViewportContainer" type="SubViewportContainer" parent="." unique_id=1963190479]
-visible = false
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-
-[node name="SubViewport" type="SubViewport" parent="SubViewportContainer" unique_id=154174026]
-disable_3d = true
-handle_input_locally = false
-size = Vector2i(640, 360)
-size_2d_override = Vector2i(1280, 720)
-size_2d_override_stretch = true
-render_target_update_mode = 0
-
-[node name="World" type="Node2D" parent="SubViewportContainer/SubViewport" unique_id=2010156347]
-
-[node name="Icon" type="Sprite2D" parent="SubViewportContainer/SubViewport/World" unique_id=356331594]
-position = Vector2(880, 474)
-texture = ExtResource("1_ig7tw")
+[node name="UI" parent="." unique_id=791075614 instance=ExtResource("1_7mycd")]
 
 [node name="World" type="Node2D" parent="." unique_id=1354985750]
 texture_filter = 1
