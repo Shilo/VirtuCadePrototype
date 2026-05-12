@@ -1,6 +1,7 @@
 [gd_scene format=3 uid="uid://dstmujk5bvtf1"]
 
 [ext_resource type="PackedScene" uid="uid://ckpxkiuns3i53" path="res://ui/ui.tscn" id="1_7mycd"]
+[ext_resource type="Theme" uid="uid://cgd7xydn3yu7t" path="res://addons/neocade_theme/neocade_theme.tres" id="2_neoth"]
 [ext_resource type="Texture2D" uid="uid://nxkv4nmu3jiu" path="res://world/map/background.png" id="3_1bvp3"]
 [ext_resource type="PackedScene" uid="uid://61td2etp34mc" path="res://world/map/map.tscn" id="4_1bvp3"]
 [ext_resource type="PackedScene" uid="uid://cs08r5tcyhxyn" path="res://world/player/player.tscn" id="5_lquwl"]
@@ -14,6 +15,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+theme = ExtResource("2_neoth")
 
 [node name="UI" parent="." unique_id=791075614 instance=ExtResource("1_7mycd")]
 
