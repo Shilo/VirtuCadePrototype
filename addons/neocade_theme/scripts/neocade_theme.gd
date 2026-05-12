@@ -207,21 +207,19 @@ func _init() -> void:
 static func apply_globally() -> void:
 	if Engine.is_editor_hint():
 		return
-	var loop := Engine.get_main_loop()
-	if loop is SceneTree:
-		_neocade_do_apply_globally()
-		return
-	# Defer a one-shot lambda rather than self-recursive `call_deferred`.
-	# If `SceneTree` never becomes the main loop (e.g. a custom `MainLoop`),
-	# the lambda no-ops once instead of looping forever through the queue.
-	var deferred := func() -> void:
-		if Engine.get_main_loop() is SceneTree:
-			_neocade_do_apply_globally()
-	deferred.call_deferred()
+	if not _do_apply_globally():
+		_do_apply_globally.call_deferred()
 
 
-static func _neocade_do_apply_globally() -> void:
+# Returns true if the merge happened, false if `SceneTree` wasn't the
+# main loop yet. The deferred caller invokes this once and won't re-defer
+# even if it fails again (e.g. a custom `MainLoop` that never becomes
+# `SceneTree`) — single shot, no infinite recursion.
+static func _do_apply_globally() -> bool:
+	if not (Engine.get_main_loop() is SceneTree):
+		return false
 	ThemeDB.get_default_theme().merge_with(load("res://addons/neocade_theme/neocade_theme.tres") as Theme)
+	return true
 
 
 static func selectable_styles() -> PackedInt32Array:
