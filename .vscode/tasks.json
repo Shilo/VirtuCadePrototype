@@ -1,0 +1,19 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Update NeoCade Theme subtree",
+      "type": "shell",
+      "command": "git",
+      "args": [
+        "subtree",
+        "pull",
+        "--prefix=addons/neocade_theme",
+        "https://github.com/Shilo/NeoCade-Theme.git",
+        "addon",
+        "--squash"
+      ],
+      "problemMatcher": []
+    }
+  ]
+}
