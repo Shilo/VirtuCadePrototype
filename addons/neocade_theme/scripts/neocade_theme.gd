@@ -181,25 +181,32 @@ func _init() -> void:
 	_regenerate_theme()
 
 
-## Merge the canonical NeoCade Theme into `ThemeDB.project_theme` so it
+## Merge the canonical NeoCade Theme into `ThemeDB.default_theme` so it
 ## propagates globally to every Control via standard Godot theme inheritance —
-## main scene, autoloads, popups, dialogs, every UI surface.
-##
-## REQUIRED: `[gui] theme/custom` in `project.godot` must be set to the
-## bundled stub at `res://addons/neocade_theme/neocade_theme_project_stub.tres`.
-## The stub is a plain `Theme` (no `class_name`, no properties) — it's the
-## load target at boot, and this method populates it at runtime. The real
-## `neocade_theme.tres` cannot be set as `theme/custom` directly because
-## that triggers godotengine/godot#111656 (10 spurious boot-time errors).
+## main scene, autoloads, popups, dialogs, every UI surface. Standard
+## workaround for godotengine/godot#111656 (`class_name`'d resource subclasses
+## with properties trip a non-fatal `parse_message` error storm when set as
+## `[gui] theme/custom`).
 ##
 ## Call from any node's `_ready()`, or register the bundled autoload at
 ## `res://addons/neocade_theme/scripts/neocade_theme_autoload.gd` in
-## Project Settings > AutoLoad for zero-config global application.
+## Project Settings > AutoLoad for one-step global application.
+##
+## Why `default_theme` and not `[gui] theme/custom`?
+##   The real `neocade_theme.tres` triggers the engine bug if assigned to
+##   `theme/custom`. `ThemeDB.set_project_theme()` isn't bound to GDScript
+##   so we can't assign it at runtime. But `ThemeDB.default_theme` IS in
+##   Godot's standard `[project_theme, default_theme]` fallback chain for
+##   every Control's theme lookup, and `get_default_theme()` returns a
+##   mutable `Ref<Theme>` we can `merge_with()` at runtime. Result: same
+##   global reach as `theme/custom` would have, no engine bug, no stub.
 ##
 ## Safe to call at any time: if `SceneTree` isn't yet the main loop, the
-## merge is deferred to the next idle flush. If no project theme is set,
-## errors with a clear message pointing at the stub setup.
+## merge is deferred to the next idle flush. No-ops in the editor
+## (`Engine.is_editor_hint()`) to avoid mutating the editor's UI theme.
 static func apply_globally() -> void:
+	if Engine.is_editor_hint():
+		return
 	var loop := Engine.get_main_loop()
 	if loop is SceneTree:
 		_neocade_do_apply_globally()
@@ -214,11 +221,7 @@ static func apply_globally() -> void:
 
 
 static func _neocade_do_apply_globally() -> void:
-	var project_theme := ThemeDB.get_project_theme()
-	if project_theme == null:
-		push_error("NeoCadeTheme.apply_globally: no project theme is set. Configure `[gui] theme/custom` in project.godot to `res://addons/neocade_theme/neocade_theme_project_stub.tres`. See README \"Usage\".")
-		return
-	project_theme.merge_with(load("res://addons/neocade_theme/neocade_theme.tres") as Theme)
+	ThemeDB.get_default_theme().merge_with(load("res://addons/neocade_theme/neocade_theme.tres") as Theme)
 
 
 static func selectable_styles() -> PackedInt32Array:
