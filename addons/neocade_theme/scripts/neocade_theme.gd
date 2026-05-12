@@ -176,7 +176,7 @@ func _init() -> void:
 	if Engine.get_main_loop() is SceneTree:
 		_regenerate_theme()
 	else:
-		call_deferred("_regenerate_theme")
+		_regenerate_theme.call_deferred()
 
 
 static func selectable_styles() -> PackedInt32Array:
