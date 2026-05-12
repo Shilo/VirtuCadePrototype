@@ -181,33 +181,45 @@ func _init() -> void:
 	_regenerate_theme()
 
 
-## Apply the canonical NeoCade Theme to the SceneTree's root viewport so it
-## propagates globally — main scene, autoloads, popups, every Control
-## everywhere. Recommended workaround for godotengine/godot#111656, which
-## breaks the project `[gui] theme/custom` setting for any `class_name`'d
-## resource subclass with properties.
+## Merge the canonical NeoCade Theme into `ThemeDB.default_theme` so it
+## propagates globally to every Control via standard Godot theme inheritance —
+## main scene, autoloads, popups, dialogs, every UI surface. Standard
+## workaround for godotengine/godot#111656 (`class_name`'d resource subclasses
+## with properties trip a non-fatal `parse_message` error storm when set as
+## `[gui] theme/custom`).
 ##
 ## Call from any node's `_ready()`, or register the bundled autoload at
 ## `res://addons/neocade_theme/scripts/neocade_theme_autoload.gd` in
-## Project Settings > AutoLoad for zero-config global application.
+## Project Settings > AutoLoad for one-step global application.
+##
+## Why `default_theme` and not `[gui] theme/custom`?
+##   The real `neocade_theme.tres` triggers the engine bug if assigned to
+##   `theme/custom`. `ThemeDB.set_project_theme()` isn't bound to GDScript
+##   so we can't assign it at runtime. But `ThemeDB.default_theme` IS in
+##   Godot's standard `[project_theme, default_theme]` fallback chain for
+##   every Control's theme lookup, and `get_default_theme()` returns a
+##   mutable `Ref<Theme>` we can `merge_with()` at runtime. Result: same
+##   global reach as `theme/custom` would have, no engine bug, no stub.
 ##
 ## Safe to call at any time: if `SceneTree` isn't yet the main loop, the
-## assignment is deferred to the next idle flush. For a customized theme,
-## set `get_tree().root.theme` directly with your own instance.
-static func apply_to_root_viewport() -> void:
-	var loop := Engine.get_main_loop()
-	if loop is SceneTree:
-		(loop as SceneTree).root.theme = load("res://addons/neocade_theme/neocade_theme.tres") as Theme
+## merge is deferred to the next idle flush. No-ops in the editor
+## (`Engine.is_editor_hint()`) to avoid mutating the editor's UI theme.
+static func apply_globally() -> void:
+	if Engine.is_editor_hint():
 		return
-	# Defer a one-shot lambda rather than self-recursive `call_deferred`.
-	# If `SceneTree` never becomes the main loop (e.g. a custom `MainLoop`
-	# implementation), the lambda no-ops once instead of looping forever
-	# through the deferred queue.
-	var deferred := func() -> void:
-		var tree := Engine.get_main_loop() as SceneTree
-		if tree:
-			tree.root.theme = load("res://addons/neocade_theme/neocade_theme.tres") as Theme
-	deferred.call_deferred()
+	if not _do_apply_globally():
+		_do_apply_globally.call_deferred()
+
+
+# Returns true if the merge happened, false if `SceneTree` wasn't the
+# main loop yet. The deferred caller invokes this once and won't re-defer
+# even if it fails again (e.g. a custom `MainLoop` that never becomes
+# `SceneTree`) — single shot, no infinite recursion.
+static func _do_apply_globally() -> bool:
+	if not (Engine.get_main_loop() is SceneTree):
+		return false
+	ThemeDB.get_default_theme().merge_with(load("res://addons/neocade_theme/neocade_theme.tres") as Theme)
+	return true
 
 
 static func selectable_styles() -> PackedInt32Array:
