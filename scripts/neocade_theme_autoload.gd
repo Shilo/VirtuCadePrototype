@@ -6,12 +6,7 @@ extends Node
 ## the theme — including UI inside other autoloads, popups, and dialogs.
 ## Same global reach as `[gui] theme/custom` without triggering
 ## godotengine/godot#111656.
-##
-## Override `THEME_PATH` (or copy this file under your own project and
-## tweak it there) if you ship a customized theme resource.
-
-const THEME_PATH := "res://addons/neocade_theme/neocade_theme.tres"
-
 
 func _ready() -> void:
-	NeoCadeTheme.apply_to_root_viewport(load(THEME_PATH))
+	NeoCadeTheme.apply_to_root_viewport()
+	queue_free()  # single-shot — theme assignment is the only job
