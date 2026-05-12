@@ -27,6 +27,10 @@ window/size/viewport_height=720
 window/stretch/mode="canvas_items"
 window/stretch/aspect="expand"
 
+[gui]
+
+theme/custom="res://addons/neocade_theme/neocade_theme_project_stub.tres"
+
 [input]
 
 ui_left={

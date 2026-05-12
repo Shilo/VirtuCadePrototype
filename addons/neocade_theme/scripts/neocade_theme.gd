@@ -181,33 +181,44 @@ func _init() -> void:
 	_regenerate_theme()
 
 
-## Apply the canonical NeoCade Theme to the SceneTree's root viewport so it
-## propagates globally — main scene, autoloads, popups, every Control
-## everywhere. Recommended workaround for godotengine/godot#111656, which
-## breaks the project `[gui] theme/custom` setting for any `class_name`'d
-## resource subclass with properties.
+## Merge the canonical NeoCade Theme into `ThemeDB.project_theme` so it
+## propagates globally to every Control via standard Godot theme inheritance —
+## main scene, autoloads, popups, dialogs, every UI surface.
+##
+## REQUIRED: `[gui] theme/custom` in `project.godot` must be set to the
+## bundled stub at `res://addons/neocade_theme/neocade_theme_project_stub.tres`.
+## The stub is a plain `Theme` (no `class_name`, no properties) — it's the
+## load target at boot, and this method populates it at runtime. The real
+## `neocade_theme.tres` cannot be set as `theme/custom` directly because
+## that triggers godotengine/godot#111656 (10 spurious boot-time errors).
 ##
 ## Call from any node's `_ready()`, or register the bundled autoload at
 ## `res://addons/neocade_theme/scripts/neocade_theme_autoload.gd` in
 ## Project Settings > AutoLoad for zero-config global application.
 ##
 ## Safe to call at any time: if `SceneTree` isn't yet the main loop, the
-## assignment is deferred to the next idle flush. For a customized theme,
-## set `get_tree().root.theme` directly with your own instance.
-static func apply_to_root_viewport() -> void:
+## merge is deferred to the next idle flush. If no project theme is set,
+## errors with a clear message pointing at the stub setup.
+static func apply_globally() -> void:
 	var loop := Engine.get_main_loop()
 	if loop is SceneTree:
-		(loop as SceneTree).root.theme = load("res://addons/neocade_theme/neocade_theme.tres") as Theme
+		_neocade_do_apply_globally()
 		return
 	# Defer a one-shot lambda rather than self-recursive `call_deferred`.
-	# If `SceneTree` never becomes the main loop (e.g. a custom `MainLoop`
-	# implementation), the lambda no-ops once instead of looping forever
-	# through the deferred queue.
+	# If `SceneTree` never becomes the main loop (e.g. a custom `MainLoop`),
+	# the lambda no-ops once instead of looping forever through the queue.
 	var deferred := func() -> void:
-		var tree := Engine.get_main_loop() as SceneTree
-		if tree:
-			tree.root.theme = load("res://addons/neocade_theme/neocade_theme.tres") as Theme
+		if Engine.get_main_loop() is SceneTree:
+			_neocade_do_apply_globally()
 	deferred.call_deferred()
+
+
+static func _neocade_do_apply_globally() -> void:
+	var project_theme := ThemeDB.get_project_theme()
+	if project_theme == null:
+		push_error("NeoCadeTheme.apply_globally: no project theme is set. Configure `[gui] theme/custom` in project.godot to `res://addons/neocade_theme/neocade_theme_project_stub.tres`. See README \"Usage\".")
+		return
+	project_theme.merge_with(load("res://addons/neocade_theme/neocade_theme.tres") as Theme)
 
 
 static func selectable_styles() -> PackedInt32Array:
