@@ -181,6 +181,27 @@ func _init() -> void:
 	_regenerate_theme()
 
 
+## Apply a NeoCade Theme to the SceneTree's root viewport so it propagates
+## globally — main scene, autoloads, popups, every Control everywhere.
+## Recommended workaround for godotengine/godot#111656, which breaks the
+## project `[gui] theme/custom` setting for any `class_name`'d resource
+## subclass with properties.
+##
+## Call from any node's `_ready()`, or register the bundled autoload at
+## `res://addons/neocade_theme/scripts/neocade_theme_autoload.gd` in
+## Project Settings > AutoLoad for zero-config global application.
+##
+## When `target` is null, loads the canonical `neocade_theme.tres`.
+static func apply_to_root_viewport(target: Theme = null) -> void:
+	var loop := Engine.get_main_loop()
+	if not (loop is SceneTree):
+		push_error("NeoCadeTheme.apply_to_root_viewport: SceneTree is not yet the main loop — call this from _ready() or later")
+		return
+	if target == null:
+		target = load("res://addons/neocade_theme/neocade_theme.tres") as Theme
+	(loop as SceneTree).root.theme = target
+
+
 static func selectable_styles() -> PackedInt32Array:
 	return PackedInt32Array([Style.BUBBLE, Style.BURST, Style.DAYBREAK, Style.PULSE, Style.SLATE])
 
