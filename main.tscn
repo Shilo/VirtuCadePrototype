@@ -37,7 +37,11 @@ texture = ExtResource("3_1bvp3")
 position = Vector2(40, 1)
 target_name = "screensaver"
 
-[node name="Door" parent="World" unique_id=1431310349 node_paths=PackedStringArray("use_door", "down_door") instance=ExtResource("6_7mycd")]
+[node name="VirtuMachine2" parent="World" unique_id=1431310349 instance=ExtResource("7_272bh")]
+position = Vector2(-40, 1)
+target_name = "rock_n_roll"
+
+[node name="Door" parent="World" unique_id=1335151687 node_paths=PackedStringArray("use_door", "down_door") instance=ExtResource("6_7mycd")]
 position = Vector2(-176, -112)
 use_door = NodePath("../Door2")
 down_door = NodePath("../Door2")
