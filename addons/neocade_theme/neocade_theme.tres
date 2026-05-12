@@ -1,0 +1,18 @@
+[gd_resource type="Theme" script_class="NeoCadeTheme" load_steps=2 format=3 uid="uid://cgd7xydn3yu7t"]
+
+[ext_resource type="Script" uid="uid://d3ldbrvt75ldq" path="res://addons/neocade_theme/scripts/neocade_theme.gd" id="1_neocade"]
+
+[resource]
+script = ExtResource("1_neocade")
+style = 1
+raised = false
+platform = 2
+base_color = Color(0.08235294, 0.101960786, 0.18039216, 1)
+accent_color = Color(0.54509807, 1, 0.41568628, 1)
+corner_radius = 0
+spacing = 14
+raised_strength = 2
+focus_thickness = 2
+outline_width = 1
+use_runtime_popup_selection_icons = true
+texture_cache = false

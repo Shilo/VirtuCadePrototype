@@ -1,0 +1,10 @@
+[gd_resource type="FontVariation" format=3]
+
+[ext_resource type="FontFile" path="res://addons/neocade_theme/fonts/inter_variable.ttf" id="1_mtogn"]
+
+[resource]
+base_font = ExtResource("1_mtogn")
+variation_opentype = {
+"opsz": 24,
+"wght": 600
+}
