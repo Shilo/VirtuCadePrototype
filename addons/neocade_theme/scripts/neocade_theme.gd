@@ -191,15 +191,23 @@ func _init() -> void:
 ## `res://addons/neocade_theme/scripts/neocade_theme_autoload.gd` in
 ## Project Settings > AutoLoad for zero-config global application.
 ##
-## Safe to call at any time: if `SceneTree` is not yet the main loop, the
-## assignment is deferred until it is. For a customized theme, set
-## `get_tree().root.theme` directly with your own instance.
+## Safe to call at any time: if `SceneTree` isn't yet the main loop, the
+## assignment is deferred to the next idle flush. For a customized theme,
+## set `get_tree().root.theme` directly with your own instance.
 static func apply_to_root_viewport() -> void:
 	var loop := Engine.get_main_loop()
 	if loop is SceneTree:
 		(loop as SceneTree).root.theme = load("res://addons/neocade_theme/neocade_theme.tres") as Theme
-	else:
-		apply_to_root_viewport.call_deferred()
+		return
+	# Defer a one-shot lambda rather than self-recursive `call_deferred`.
+	# If `SceneTree` never becomes the main loop (e.g. a custom `MainLoop`
+	# implementation), the lambda no-ops once instead of looping forever
+	# through the deferred queue.
+	var deferred := func() -> void:
+		var tree := Engine.get_main_loop() as SceneTree
+		if tree:
+			tree.root.theme = load("res://addons/neocade_theme/neocade_theme.tres") as Theme
+	deferred.call_deferred()
 
 
 static func selectable_styles() -> PackedInt32Array:
