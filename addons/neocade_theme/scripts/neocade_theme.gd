@@ -165,18 +165,20 @@ var _persistent_icon_cache: Dictionary = {}
 var _persistent_generated_texture_cache: Dictionary = {}
 
 func _init() -> void:
-	# Regenerate immediately when SceneTree is live (runtime `.new()`,
-	# `.duplicate()`, editor reloads). During very early boot — project
-	# `[gui] theme/custom=...` resolution, parse-time `preload()` chains,
-	# and class @implicit_new scans — the SceneTree singleton isn't set up
-	# yet, and _regenerate_theme() emits debugger traffic that trips a null
-	# SceneTree::get_singleton() guard in scene_debugger.cpp's parse_message().
-	# Defer to the first idle flush so the SceneTree is live by then; the
-	# regen still completes before the first frame draws.
-	if Engine.get_main_loop() is SceneTree:
-		_regenerate_theme()
-	else:
-		_regenerate_theme.call_deferred()
+	# The canonical neocade_theme.tres is empty (`[resource]` with no overrides),
+	# so no setters fire during deserialization — _regenerate_theme() here is
+	# what actually populates the Theme. Must be synchronous so the first draw
+	# after scene load sees populated styleboxes.
+	#
+	# Known Godot bug: if this Theme subclass is set as `[gui] theme/custom`
+	# in project.godot, the runtime debugger emits 10 spurious non-fatal
+	# `parse_message: Parameter "SceneTree::get_singleton()" is null` errors
+	# during the editor↔runtime live-edit handshake — unrelated to this code,
+	# triggered by class registration before SceneTree is the main loop. See
+	# https://github.com/godotengine/godot/issues/111656 (open, regression
+	# since 4.4). Workaround: assign the theme on your main scene's root
+	# Control instead of via `theme/custom`. README "Usage" covers this.
+	_regenerate_theme()
 
 
 static func selectable_styles() -> PackedInt32Array:
