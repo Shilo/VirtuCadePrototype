@@ -3,11 +3,11 @@
   // under `addons/neocade_theme/` are open with unsaved buffers in your
   // editor. A stale IDE buffer can auto-save its older content over the
   // freshly-pulled file, leaving the working tree dirty and causing
-  // `git subtree pull` to fail next time with "Cannot add". If the
-  // pre-flight check below trips, the easiest fixes are:
-  //   1) Close the subtree files in your editor and re-run the task; OR
-  //   2) Use `Ctrl+Shift+P > Revert File` on any open subtree file to
-  //      drop the buffer and reload from disk, then re-run.
+  // `git subtree pull` to fail next time with "Cannot add". The
+  // pre-flight check below catches that and prints a clear actionable
+  // message. The check lives in `.vscode/check_subtree_clean.ps1` so it
+  // avoids the quoting-hell inherent to inline pwsh -Command in VSCode
+  // tasks.
   "version": "2.0.0",
   "tasks": [
     {
@@ -17,8 +17,8 @@
       "command": "pwsh",
       "args": [
         "-NoProfile",
-        "-Command",
-        "$d = git status --porcelain addons/neocade_theme/; if ($d) { Write-Host ''; Write-Host 'ERROR: addons/neocade_theme has uncommitted changes:' -ForegroundColor Red; Write-Host $d; Write-Host ''; Write-Host 'Common cause: a stale IDE buffer auto-saved its older content over the freshly-pulled file.' -ForegroundColor Yellow; Write-Host 'Fix: close the file(s) in your editor (or Ctrl+Shift+P > Revert File to discard the buffer and reload from disk),' -ForegroundColor Yellow; Write-Host '     then re-run this task.' -ForegroundColor Yellow; exit 1 }"
+        "-File",
+        "${workspaceFolder}/.vscode/check_subtree_clean.ps1"
       ],
       "presentation": { "reveal": "silent", "panel": "shared" },
       "problemMatcher": []
