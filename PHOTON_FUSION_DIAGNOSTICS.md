@@ -4,7 +4,7 @@ Living debug log for the Photon Fusion 3 for Godot shared-authority test project
 Keep this file updated until the lag/cadence cause is found. If no solution is found,
 this should become the report sent to Photon/Fusion developers.
 
-Last updated: 2026-05-15 06:23 PDT
+Last updated: 2026-05-15 08:00 PDT
 
 ## Project Context
 
@@ -40,6 +40,8 @@ Current important runtime/test settings:
 - Current confirmed two-player movement baseline: `FusionSharedReplicator.interest_mode = 0`, no `FusionInterestArea` node, root smoothing enabled.
 
 The interest-area setup has been run successfully twice at `RoomSendRate = 60`. It repeatedly improved raw cadence from about 15-16 visible changes/sec to about 30-32 visible changes/sec, but with a large bandwidth increase. At `RoomSendRate = 30`, `base_send_rate = 1` mostly produced about 20-21 raw visible changes/sec and about 60-67 kbps/client with smoothing off. `base_send_rate = 0` and `base_send_rate = 2` were both worse, mostly around 10-11 visible changes/sec. With smoothing on and `base_send_rate = 1`, visible remote motion reached render cadence, usually 60 changes/sec, but bandwidth stayed high at roughly 61-72 kbps/client. With smoothing on and area interest disabled/removed, visible remote motion still reached render cadence while bandwidth dropped to hundreds of bps in the tiny two-player test. This does not mean area interest should be avoided in production; production-scale area interest is still expected for culling many players/objects. It only means this specific `base_send_rate = 1` setup is not justified as a brute-force fix for player-root movement in a two-player close-range test.
+
+Speed sensitivity is now confirmed: faster local movement does not make default 30 Hz/no-area root replication update more often. With smoothing disabled, `100 px/sec`, `200 px/sec`, and `500 px/sec` all stayed around 10-11 raw visible remote updates/sec. The only consistent change was larger jumps per update: about 9 px, 18 px, and 42-45 px respectively. This rules out the earlier theory that the original 100 px/sec movement was too small to trigger frequent updates.
 
 ## Original Symptom
 
@@ -897,7 +899,7 @@ The original visual lag was primarily caused by evaluating raw replicated root u
 
 Status: ready to run.
 
-Current active profile for the next run: `Profile.PRODUCTION_BASELINE`.
+Current active profile after the speed tests: `Profile.PRODUCTION_BASELINE`.
 
 To avoid hand-mixing settings, network test profiles now live in:
 
@@ -923,6 +925,30 @@ For each profile:
 - Record `remote_pos_changes_per_sec`, `avg_change_ms`, `avg_step_px`, `sent_bps`, `recv_bps`, and subjective feel.
 
 Recommended run order:
+
+Speed sensitivity check:
+
+1. `Profile.RAW_DEFAULT_SPEED_1X`
+   - Purpose: current 100 px/sec speed.
+   - Settings: 30/30/30 send rates, priority 2, update interval 1, no area interest.
+   - Diagnostic-only change: `root_smoothing = false` so `remote_pos_changes_per_sec` reflects raw visible root updates instead of smoothed presentation.
+
+2. `Profile.RAW_DEFAULT_SPEED_2X`
+   - Purpose: 200 px/sec speed.
+   - Same settings as `RAW_DEFAULT_SPEED_1X`; only player speed changes.
+
+3. `Profile.RAW_DEFAULT_SPEED_5X`
+   - Purpose: 500 px/sec speed.
+   - Same settings as `RAW_DEFAULT_SPEED_1X`; only player speed changes.
+
+How to read the speed test:
+
+- If speed does not affect raw sync rate, `remote_pos_changes_per_sec` should stay in the same rough range across 1x/2x/5x.
+- `avg_step_px` should grow with speed because each received update covers more distance.
+- `avg_remote_speed` should roughly match 100/200/500 px/sec during clean horizontal movement.
+- If faster movement changes raw sync rate, it will show up as a clear change in `remote_pos_changes_per_sec` and `avg_change_ms`, not just larger steps.
+
+Original broader factor run order:
 
 1. `Profile.PRODUCTION_BASELINE`
    - Confirms the current winner still holds after adding the profile harness.
@@ -977,6 +1003,126 @@ Recommended run order:
     - Necessary paired-factor test: enables explicit area interest with `base_send_rate = 1`.
     - Everything else stays production-like.
     - Question: Confirm visible cadence remains good but bandwidth spikes compared with no area interest.
+
+### Speed Sensitivity Result: `Profile.RAW_DEFAULT_SPEED_1X`
+
+Status: completed.
+
+Profile:
+
+```text
+raw_default_speed1x
+RoomSendRate = 30
+ClientSendRate = 30
+AuthoritySendRate = 30
+DefaultPriority = 2
+FusionSharedReplicator.update_interval = 1
+FusionSharedReplicator.interest_mode = 0
+No FusionInterestArea
+root_smoothing = false
+Player speed = 100 px/sec
+```
+
+Clean remote moving-player windows:
+
+```text
+remote_pos_changes_per_sec=10.4 avg_change_ms=98.3 avg_step_px=8.97 avg_remote_speed=95.8
+remote_pos_changes_per_sec=10.5 avg_change_ms=99.2 avg_step_px=9.29 avg_remote_speed=98.3
+remote_pos_changes_per_sec=10.4 avg_change_ms=102.5 avg_step_px=9.21 avg_remote_speed=94.3
+remote_pos_changes_per_sec=11.0 avg_change_ms=98.4 avg_step_px=9.02 avg_remote_speed=96.0
+remote_pos_changes_per_sec=10.4 avg_change_ms=99.1 avg_step_px=8.97 avg_remote_speed=95.0
+remote_pos_changes_per_sec=10.9 avg_change_ms=98.4 avg_step_px=9.17 avg_remote_speed=97.6
+remote_pos_changes_per_sec=10.4 avg_change_ms=99.2 avg_step_px=9.37 avg_remote_speed=99.2
+```
+
+Conclusion:
+
+At 100 px/sec with default 30 Hz/no-area replication and smoothing disabled, raw visible remote updates are roughly 10-11/sec. This is the baseline for the 2x and 5x speed comparison.
+
+### Speed Sensitivity Result: `Profile.RAW_DEFAULT_SPEED_2X`
+
+Status: completed.
+
+Profile:
+
+```text
+raw_default_speed2x
+RoomSendRate = 30
+ClientSendRate = 30
+AuthoritySendRate = 30
+DefaultPriority = 2
+FusionSharedReplicator.update_interval = 1
+FusionSharedReplicator.interest_mode = 0
+No FusionInterestArea
+root_smoothing = false
+Player speed = 200 px/sec
+```
+
+Clean remote moving-player windows:
+
+```text
+remote_pos_changes_per_sec=10.5 avg_change_ms=99.2 avg_step_px=19.13 avg_remote_speed=202.4
+remote_pos_changes_per_sec=10.4 avg_change_ms=98.3 avg_step_px=17.29 avg_remote_speed=184.7
+remote_pos_changes_per_sec=10.9 avg_change_ms=98.4 avg_step_px=17.73 avg_remote_speed=188.7
+remote_pos_changes_per_sec=10.5 avg_change_ms=98.3 avg_step_px=18.10 avg_remote_speed=193.2
+remote_pos_changes_per_sec=10.4 avg_change_ms=103.3 avg_step_px=18.10 avg_remote_speed=183.9
+remote_pos_changes_per_sec=10.4 avg_change_ms=98.3 avg_step_px=18.26 avg_remote_speed=194.9
+remote_pos_changes_per_sec=10.9 avg_change_ms=98.4 avg_step_px=18.03 avg_remote_speed=191.9
+remote_pos_changes_per_sec=10.4 avg_change_ms=98.3 avg_step_px=17.62 avg_remote_speed=188.2
+remote_pos_changes_per_sec=10.9 avg_change_ms=98.4 avg_step_px=17.42 avg_remote_speed=185.4
+```
+
+Conclusion:
+
+Doubling player speed did not meaningfully increase raw visible remote update rate. The update rate stayed around 10-11/sec, while the average step size roughly doubled from about 9 px to about 18 px. This supports the idea that movement speed changes how large each remote jump is, not how often default/no-area root replication updates arrive.
+
+### Speed Sensitivity Result: `Profile.RAW_DEFAULT_SPEED_5X`
+
+Status: completed.
+
+Profile:
+
+```text
+raw_default_speed5x
+RoomSendRate = 30
+ClientSendRate = 30
+AuthoritySendRate = 30
+DefaultPriority = 2
+FusionSharedReplicator.update_interval = 1
+FusionSharedReplicator.interest_mode = 0
+No FusionInterestArea
+root_smoothing = false
+Player speed = 500 px/sec
+```
+
+Clean remote moving-player windows:
+
+```text
+remote_pos_changes_per_sec=10.9 avg_change_ms=99.2 avg_step_px=42.80 avg_remote_speed=451.9
+remote_pos_changes_per_sec=10.4 avg_change_ms=98.3 avg_step_px=40.73 avg_remote_speed=435.0
+remote_pos_changes_per_sec=10.4 avg_change_ms=103.3 avg_step_px=45.07 avg_remote_speed=457.9
+remote_pos_changes_per_sec=10.4 avg_change_ms=99.2 avg_step_px=43.94 avg_remote_speed=465.2
+remote_pos_changes_per_sec=10.9 avg_change_ms=97.6 avg_step_px=42.91 avg_remote_speed=460.4
+remote_pos_changes_per_sec=10.9 avg_change_ms=98.4 avg_step_px=44.70 avg_remote_speed=476.0
+remote_pos_changes_per_sec=10.4 avg_change_ms=98.4 avg_step_px=42.46 avg_remote_speed=453.2
+remote_pos_changes_per_sec=10.9 avg_change_ms=98.4 avg_step_px=43.29 avg_remote_speed=460.8
+remote_pos_changes_per_sec=10.9 avg_change_ms=98.4 avg_step_px=43.56 avg_remote_speed=463.6
+remote_pos_changes_per_sec=10.9 avg_change_ms=98.4 avg_step_px=42.80 avg_remote_speed=455.8
+```
+
+Conclusion:
+
+Increasing speed from 1x to 5x did not meaningfully increase raw visible remote update rate. The update rate stayed around 10-11/sec, while the average step size grew from about 9 px at 1x, to about 18 px at 2x, to about 42-45 px at 5x. Faster movement makes the raw stutter more obvious because each unsmoothed update covers more distance; it does not make default/no-area root replication send or apply updates more often.
+
+Overall speed-test conclusion:
+
+```text
+1x / 100 px/sec: remote updates ~= 10-11/sec, avg step ~= 9 px
+2x / 200 px/sec: remote updates ~= 10-11/sec, avg step ~= 18 px
+5x / 500 px/sec: remote updates ~= 10-11/sec, avg step ~= 42-45 px
+```
+
+This confirms speed was not the hidden fix for the raw update-rate problem. The bottleneck is the default/no-area root replication delivery/apply rate, not that the original 100 px/sec movement was too small to trigger frequent updates.
 
 ### Confirmation Result: `Profile.BEST_CASE_ATTEMPT`
 
