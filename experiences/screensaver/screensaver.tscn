@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://bvcvrjks32y0v"]
 
 [ext_resource type="Script" uid="uid://cxug0etq6cqh1" path="res://experiences/screensaver/screensaver.gd" id="1_in61b"]
-[ext_resource type="Script" path="res://experiences/screensaver/logo.gd" id="2_bg3o8"]
+[ext_resource type="Script" uid="uid://b3r1o5atsx1ai" path="res://experiences/screensaver/logo.gd" id="2_bg3o8"]
 [ext_resource type="Texture2D" uid="uid://bvamry6nm2hut" path="res://icon.svg" id="2_wyeo1"]
 
 [sub_resource type="FusionReplicationConfig" id="FusionReplicationConfig_jc8lb"]
