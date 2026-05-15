@@ -27,6 +27,10 @@ window/size/viewport_height=720
 window/stretch/mode="canvas_items"
 window/stretch/aspect="expand"
 
+[fusion]
+
+connection/app_id="ec1a0329-e20f-429a-a9b3-e6a59520d44f"
+
 [input]
 
 ui_left={
