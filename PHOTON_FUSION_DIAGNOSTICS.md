@@ -4,7 +4,7 @@ Living debug log for the Photon Fusion 3 for Godot shared-authority test project
 Keep this file updated until the lag/cadence cause is found. If no solution is found,
 this should become the report sent to Photon/Fusion developers.
 
-Last updated: 2026-05-15 09:42 PDT
+Last updated: 2026-05-15 09:54 PDT
 
 ## Project Context
 
@@ -15,21 +15,22 @@ Last updated: 2026-05-15 09:42 PDT
 - Topology: Shared Authority
 - Guide used: https://doc.photonengine.com/fusion-godot/current/getting-started/quick-start-guide
 - Official starter sample checked: `C:\Users\shilo\Downloads\photon-fusion-godot-starter_3.0.0.407-2`
+- Official racing sample checked: `C:\Users\shilo\Downloads\photon-fusion-godot-starter-kit-racing_3.0.0.407`
 
-## Current Diagnostic Project State
+## Current Project State
 
-Files currently modified for diagnostics:
+Files currently modified for the current baseline and retained test harness:
 
 - `core/network/network_manager/network_manager.gd`
-- `core/network/network_test_profile.gd`
 - `world/player/player.gd`
 - `world/player/player.tscn`
-- `project.godot`
+- `tests/network_test_profile.gd`
 
-Current important production-shaped movement baseline settings:
+The diagnostic profile file was moved to `res://tests/network_test_profile.gd`. Runtime diagnostics are currently disabled in both `NetworkManager` and `Player`, but the test harness remains available by changing `ACTIVE_PROFILE` in that file.
 
-- Active discovery profile: `Profile.RPC_MARKER_RAW_DEFAULT` (`rpc_marker_raw_default` room prefix)
-- The active discovery profile temporarily overrides `root_smoothing = false`, `rpc_pulse_hz = 30`, and `rpc_marker_enabled = true` to expose raw behavior.
+Current active profile:
+
+- `Profile.PRODUCTION_BASELINE` (`production_baseline` room prefix)
 - `RoomSendRate = 30`
 - `ClientSendRate = 30`
 - `AuthoritySendRate = 30`
@@ -39,8 +40,10 @@ Current important production-shaped movement baseline settings:
 - `FusionSharedReplicator.root_smoothing = true`
 - `FusionSharedReplicator.root_smooth_time = 0.08`
 - `FusionSharedReplicator.root_snap_distance = 100.0`
-- `FusionSharedReplicator.root_min_position_error = 0.1`
 - Current confirmed two-player movement baseline: `FusionSharedReplicator.interest_mode = 0`, no `FusionInterestArea` node, root smoothing enabled.
+- Hidden/non-editor properties such as `root_min_position_error` are not applied in the current baseline. It was tested, did not fix cadence, and has been removed from the active project settings.
+- `project.godot` FPS printing was turned back off after diagnostics.
+- Git currently shows `addons/fusion/bin/~libfusion.windows.editor.x86_64.release.dll` as deleted. The real editor DLL `addons/fusion/bin/libfusion.windows.editor.x86_64.release.dll` still exists; the tilde-prefixed file appears to be a tracked temporary/backup DLL created or removed by Godot/Fusion around Windows DLL locking.
 
 The interest-area setup has been run successfully twice at `RoomSendRate = 60`. It repeatedly improved raw cadence from about 15-16 visible changes/sec to about 30-32 visible changes/sec, but with a large bandwidth increase. At `RoomSendRate = 30`, `base_send_rate = 1` mostly produced about 20-21 raw visible changes/sec and about 60-67 kbps/client with smoothing off. `base_send_rate = 0` and `base_send_rate = 2` were both worse, mostly around 10-11 visible changes/sec. With smoothing on and `base_send_rate = 1`, visible remote motion reached render cadence, usually 60 changes/sec, but bandwidth stayed high at roughly 61-72 kbps/client. With smoothing on and area interest disabled/removed, visible remote motion still reached render cadence while bandwidth dropped to hundreds of bps in the tiny two-player test. This does not mean area interest should be avoided in production; production-scale area interest is still expected for culling many players/objects. It only means this specific `base_send_rate = 1` setup is not justified as a brute-force fix for player-root movement in a two-player close-range test.
 
@@ -65,7 +68,7 @@ Status: solved.
 
 ## Official Sample Benchmark Plan
 
-Status: official starter `2-platformer` default benchmark completed with region changed to `us`. A follow-up raw-cadence variant has now been prepared by disabling root smoothing in the starter `2-platformer` player and in both racing vehicle scenes, with sample regions set to `us`.
+Status: official starter `2-platformer` default benchmark completed with region changed to `us`. Raw-cadence follow-up benchmarks were also run for starter `2-platformer` and the racing kit with root smoothing disabled, sample regions set to `us`, and print-only benchmark logging added.
 
 Official Godot sample targets available locally:
 
@@ -88,7 +91,7 @@ Official Godot sample targets available locally:
      - `scenes/main.tscn`
      - `scripts/vehicle.gd`
    - Vehicle roots are `RigidBody3D` objects with `FusionSharedReplicator`.
-   - Caveat: its `project.godot` still has the placeholder app id `11111111-1111-1111-1111-111111111111`, so it needs the real Photon app id before it can be used as a live benchmark.
+   - Its `project.godot` was updated to use the real Photon app id for the raw racing benchmark.
 
 Why this matters:
 
@@ -309,7 +312,7 @@ Finding:
 
 Conclusion:
 
-This hidden threshold may still be useful for pixel-art precision, but it is not the main cause of the 15 Hz cadence.
+This hidden threshold did not fix the cadence. Because it is not exposed in the editor and has no proven practical benefit here, it should not be part of the production baseline. The current project leaves `root_min_position_error` at the plugin/default value.
 
 ### Test: `FusionInterestArea.base_send_rate = 1`
 
@@ -1030,20 +1033,20 @@ The original visual lag was primarily caused by evaluating raw replicated root u
 
 ## Confirmation Matrix: Profile-Based Retests
 
-Status: speed tests and corrected RPC pulse test completed; custom RPC-position marker profile ready to run.
+Status: speed tests, corrected RPC pulse test, RPC position-marker test, official starter sample tests, and racing sample tests completed.
 
-Current active profile after adding the custom position-stream discovery: `Profile.RPC_MARKER_RAW_DEFAULT`.
+Current active profile after returning to the best playable project baseline: `Profile.PRODUCTION_BASELINE`.
 
 To avoid hand-mixing settings, network test profiles now live in:
 
 ```text
-core/network/network_test_profile.gd
+tests/network_test_profile.gd
 ```
 
 Change only this line before each run:
 
 ```gdscript
-const ACTIVE_PROFILE := Profile.RPC_MARKER_RAW_DEFAULT
+const ACTIVE_PROFILE := Profile.PRODUCTION_BASELINE
 ```
 
 The room name is automatically changed to `lobby_<profile_id>`, so each profile gets a fresh room config after both clients restart. Run both clients from the same project copy after changing the active profile.
@@ -2146,9 +2149,9 @@ The user's internet speed/bandwidth is not causing the low-cadence movement. God
 
 With default/global root replication, raw remote root motion was below the configured room send rate: about 10-11 visible updates/sec in 30 Hz raw tests and about 15-16 visible updates/sec in 60 Hz raw tests. Explicit area interest with `FusionInterestArea.base_send_rate = 1` increased raw cadence to about 20-21 visible updates/sec at 30 Hz and about 30-32 visible updates/sec at 60 Hz, but it also raised bandwidth dramatically. In the final two-client comparison, area interest cost roughly 58-68 kbps/client instead of hundreds of bps/client. A doubled raw update rate cannot explain a roughly 100x bandwidth increase by itself; the explicit area-interest path/payload behavior appears to account for most of the bandwidth jump in the tiny two-player test.
 
-So, for raw sync cadence: area interest enabled with `base_send_rate = 1` is faster, but much heavier. Area interest disabled is cheaper, but lower cadence. `base_send_rate = 0` and `base_send_rate = 2` were worse than `base_send_rate = 1`. `DefaultPriority = 1` did not materially improve cadence or bandwidth. `root_min_position_error = 0.1` improves pixel precision but did not fix cadence. `root_snap_distance = 5.0` caused ordinary corrections to snap visibly, so snap distance should stay high enough for normal correction distances.
+So, for raw sync cadence: area interest enabled with `base_send_rate = 1` is faster, but much heavier. Area interest disabled is cheaper, but lower cadence. `base_send_rate = 0` and `base_send_rate = 2` were worse than `base_send_rate = 1`. `DefaultPriority = 1` did not materially improve cadence or bandwidth. The hidden `root_min_position_error = 0.1` test did not fix cadence and is not retained because it is not editor-exposed. `root_snap_distance = 5.0` caused ordinary corrections to snap visibly, so snap distance should stay high enough for normal correction distances.
 
-Current two-player movement tradeoff for the tested root-transform case: keep `RoomSendRate = 30`, `root_replication_mode = AUTO`, `interest_mode = 0`, no `FusionInterestArea`, `root_smoothing = true`, `root_smooth_time = 0.08`, `root_snap_distance = 100.0`, and `root_min_position_error = 0.1`. This does not make raw sync cadence maximal; it chooses low bandwidth and smooth presentation over expensive area-interest delivery in a tiny test with nothing to cull. Production-scale interest areas remain a separate requirement.
+Current two-player movement tradeoff for the tested root-transform case: keep `RoomSendRate = 30`, `root_replication_mode = AUTO`, `interest_mode = 0`, no `FusionInterestArea`, `root_smoothing = true`, `root_smooth_time = 0.08`, and `root_snap_distance = 100.0`. Do not apply hidden/non-editor root properties in the production baseline. This does not make raw sync cadence maximal; it chooses low bandwidth and smooth presentation over expensive area-interest delivery in a tiny test with nothing to cull. Production-scale interest areas remain a separate requirement.
 
 The official starter `2-platformer` sample supports this direction and also reproduces the raw issue. With official defaults preserved and only the region changed to `us`, the sample used `root_smoothing = true`, `root_smooth_time = 0.15`, `root_snap_distance = 5.0`, and `root_min_position_error = 1.0`, and clean moving remote windows commonly presented at `59.5-60.0` visible changes/sec. That is a smoothed render result, not a 60 Hz network target. With only `root_smoothing = false` changed for a raw benchmark, the same sample repeatedly clustered around `10.4-10.9` visible root changes/sec under `RoomSendRate = 30`. The racing sample behaves differently because its roots are `RigidBody3D` objects with non-zero remote velocities, so local physics integration keeps the remote body moving between network corrections. So the actual target remains default 30 Hz networking with acceptable presentation, but raw `CharacterBody` root replication appears to degrade toward 10 Hz even in Photon's own starter sample unless smoothing hides it.
 
@@ -2183,7 +2186,6 @@ Raw sync-rate finding: explicit area interest with `FusionInterestArea.base_send
 | `Player/FusionSharedReplicator` | `root_smoothing` | `true` | Default / keep; must stay enabled |
 | `Player/FusionSharedReplicator` | `root_smooth_time` | `0.08` | Project tuning; `0.05` is optional lower-latency candidate |
 | `Player/FusionSharedReplicator` | `root_snap_distance` | `100.0` | Project tuning; do not lower to `5.0` |
-| `Player/FusionSharedReplicator` | `root_min_position_error` | `0.1` | Project override; observed plugin default was `1.0` |
 
 Default/problem settings vs recommended settings:
 
@@ -2195,7 +2197,7 @@ Default/problem settings vs recommended settings:
 | `root_smoothing` | Disabled exposes raw low cadence | Enabled | This is the visual presentation fix; it does not increase real sync rate. |
 | `root_smooth_time` | 0.05 / 0.08 / 0.15 tested | 0.08 | 0.08 is stable. 0.05 is viable if lower latency feels better. 0.15 feels more delayed. |
 | `root_snap_distance` | 5 caused snapping | 100 | Low snap distance made normal movement jump at about 10-11 visible changes/sec. |
-| `root_min_position_error` | Default observed as 1.0 | 0.1 | Better pixel precision; not the main cadence fix. |
+| `root_min_position_error` | Hidden/non-editor property; `0.1` was tested | Leave default / do not set | It did not fix cadence, and non-editor values should not be part of the production baseline without a clear benefit. |
 
 Default-30-Hz tick-rate / cadence limits observed in this project:
 
