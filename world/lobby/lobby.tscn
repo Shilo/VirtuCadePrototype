@@ -4,11 +4,10 @@
 [ext_resource type="PackedScene" uid="uid://ckpxkiuns3i53" path="res://ui/ui.tscn" id="2_2ii5k"]
 [ext_resource type="Texture2D" uid="uid://nxkv4nmu3jiu" path="res://world/map/background.png" id="3_gc6gh"]
 [ext_resource type="PackedScene" uid="uid://61td2etp34mc" path="res://world/map/map.tscn" id="4_aeea4"]
-[ext_resource type="PackedScene" uid="uid://cs08r5tcyhxyn" path="res://world/player/player.tscn" id="5_f28u6"]
 [ext_resource type="PackedScene" uid="uid://bxdvyu16jsbmf" path="res://world/interactables/machine/machine.tscn" id="6_1qdmm"]
 [ext_resource type="PackedScene" uid="uid://f4ur7hqkkmey" path="res://world/interactables/door/door.tscn" id="7_r32gm"]
 
-[node name="Main" type="Node" unique_id=1214030190]
+[node name="Lobby" type="Node" unique_id=1214030190]
 script = ExtResource("1_cuuia")
 
 [node name="UI" parent="." unique_id=791075614 instance=ExtResource("2_2ii5k")]
@@ -26,8 +25,6 @@ repeat_times = 2
 texture = ExtResource("3_gc6gh")
 
 [node name="Map" parent="World" unique_id=266181050 instance=ExtResource("4_aeea4")]
-
-[node name="Player" parent="World" unique_id=1073347646 instance=ExtResource("5_f28u6")]
 
 [node name="Machine" parent="World" unique_id=2116744642 instance=ExtResource("6_1qdmm")]
 position = Vector2(40, 1)
@@ -58,3 +55,6 @@ down_door = NodePath("../Door4")
 position = Vector2(-176, 144)
 use_door = NodePath("../Door")
 up_door = NodePath("../Door2")
+
+[node name="IdleCamera" type="Camera2D" parent="World" unique_id=1458535833]
+zoom = Vector2(2, 2)

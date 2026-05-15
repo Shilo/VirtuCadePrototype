@@ -1,0 +1,12 @@
+[gd_scene format=3 uid="uid://1yboenamk5xl"]
+
+[ext_resource type="Script" uid="uid://eib6754awmru" path="res://ui/progress_radial/progress_radial.gd" id="1_rupyh"]
+[ext_resource type="Texture2D" uid="uid://c4d0gtwkubugs" path="res://ui/progress_radial/progress_radial.svg" id="2_ted5g"]
+
+[node name="ProgressRadial" type="TextureRect" unique_id=970012938]
+offset_right = 48.0
+offset_bottom = 48.0
+pivot_offset = Vector2(48, 48)
+mouse_filter = 2
+texture = ExtResource("2_ted5g")
+script = ExtResource("1_rupyh")

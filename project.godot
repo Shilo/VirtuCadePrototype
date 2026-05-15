@@ -17,8 +17,9 @@ config/icon="res://icon.svg"
 
 [autoload]
 
-ExperienceManager="*uid://bfecnhdbv5245"
+NetworkManager="*uid://dmge156sugavf"
 NeoCadeThemeLoader="*res://addons/neocade_theme/scripts/neocade_theme_autoload.gd"
+ExperienceManager="*uid://bfecnhdbv5245"
 
 [display]
 
@@ -80,4 +81,3 @@ use={
 rendering_device/driver.windows="d3d12"
 renderer/rendering_method="gl_compatibility"
 renderer/rendering_method.mobile="gl_compatibility"
-environment/defaults/default_clear_color=Color(0, 0, 0, 1)

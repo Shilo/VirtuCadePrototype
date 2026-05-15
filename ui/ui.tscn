@@ -1,6 +1,7 @@
 [gd_scene format=3 uid="uid://ckpxkiuns3i53"]
 
 [ext_resource type="Texture2D" uid="uid://bvamry6nm2hut" path="res://icon.svg" id="1_ks8t7"]
+[ext_resource type="Theme" uid="uid://cgd7xydn3yu7t" path="res://addons/neocade_theme/neocade_theme.tres" id="1_vkava"]
 [ext_resource type="Script" uid="uid://tc2bsncndqg2" path="res://ui/virtu_menu_button.gd" id="2_wl5ax"]
 
 [node name="UI" type="CanvasLayer" unique_id=791075614]
@@ -11,6 +12,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+theme = ExtResource("1_vkava")
 theme_override_constants/margin_left = 10
 theme_override_constants/margin_top = 10
 theme_override_constants/margin_right = 10

@@ -1,0 +1,43 @@
+[gd_scene format=3 uid="uid://c43dj2d5ye23v"]
+
+[ext_resource type="Script" uid="uid://vp0vqnll6ibq" path="res://core/network/connection_indicator/connection_indicator.gd" id="1_ykhpc"]
+[ext_resource type="PackedScene" uid="uid://1yboenamk5xl" path="res://ui/progress_radial/progress_radial.tscn" id="2_1f1un"]
+[ext_resource type="Texture2D" uid="uid://dqhyp7mkoo8vi" path="res://core/network/connection_indicator/network_disconnected.svg" id="3_sd21p"]
+[ext_resource type="Texture2D" uid="uid://bwwcqfaov7k35" path="res://core/network/connection_indicator/network_error.svg" id="4_okhke"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_bb7d4"]
+content_margin_left = 20.0
+content_margin_top = 20.0
+content_margin_right = 20.0
+content_margin_bottom = 20.0
+bg_color = Color(0.15392941, 0.17200784, 0.24432157, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.2028113, 0.22004032, 0.28872108, 1)
+corner_radius_top_left = 68
+corner_radius_top_right = 68
+corner_radius_bottom_right = 68
+corner_radius_bottom_left = 68
+shadow_color = Color(0, 0, 0, 0)
+
+[node name="ConnectionScreen" type="CenterContainer" unique_id=594658929]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 0
+
+[node name="ConnectionIndicator" type="PanelContainer" parent="." unique_id=583683430]
+layout_mode = 2
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_bb7d4")
+script = ExtResource("1_ykhpc")
+connecting_scene = ExtResource("2_1f1un")
+disconnected_texture = ExtResource("3_sd21p")
+error_texture = ExtResource("4_okhke")
+
+[node name="ProgressRadial" parent="ConnectionIndicator" unique_id=970012938 instance=ExtResource("2_1f1un")]
+layout_mode = 2

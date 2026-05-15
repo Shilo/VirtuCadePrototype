@@ -1,0 +1,10 @@
+[gd_scene format=3 uid="uid://dmge156sugavf"]
+
+[ext_resource type="Script" uid="uid://ch14kbsnb1ph0" path="res://core/network/network_manager/network_manager.gd" id="1_h2hj4"]
+[ext_resource type="PackedScene" uid="uid://c43dj2d5ye23v" path="res://core/network/connection_indicator/connection_screen.tscn" id="2_h2hj4"]
+
+[node name="NetworkManager" type="CanvasLayer" unique_id=883416302]
+layer = 2
+script = ExtResource("1_h2hj4")
+
+[node name="ConnectionScreen" parent="." unique_id=594658929 instance=ExtResource("2_h2hj4")]
