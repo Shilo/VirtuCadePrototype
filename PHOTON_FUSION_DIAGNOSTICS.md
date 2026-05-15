@@ -4,7 +4,7 @@ Living debug log for the Photon Fusion 3 for Godot shared-authority test project
 Keep this file updated until the lag/cadence cause is found. If no solution is found,
 this should become the report sent to Photon/Fusion developers.
 
-Last updated: 2026-05-15 08:55 PDT
+Last updated: 2026-05-15 09:03 PDT
 
 ## Project Context
 
@@ -65,7 +65,7 @@ Status: solved.
 
 ## Official Sample Benchmark Plan
 
-Status: planned after the custom RPC-position marker test and region checks.
+Status: planned after the custom RPC-position marker test, region checks, and client/server topology suite.
 
 Official Godot sample targets available locally:
 
@@ -687,13 +687,41 @@ Decision:
 
 ### Test D: Best Region
 
-Switch from fixed `us` region to `best` region if possible.
+Status: completed with `region=best`; Photon selected `us`.
 
-Decision:
+Setup and region selection:
 
-- If Fusion RTT drops, keep best-region selection or choose a better explicit region.
-- If RTT remains ~95 ms, document it for Photon.
-- Regardless, do not treat RTT as the cause of the deterministic 15 Hz cadence unless cadence changes too.
+- Both clients started with `region=best`.
+- Both clients created RTC with `best_region=true`.
+- Photon measured regions and chose `us` for both clients.
+- First client ping averages: `eu=162`, `us=80`, `asia=190`, `sa=190`.
+- Second client ping averages: `eu=160`, `us=80`, `asia=183`, `sa=190`.
+- Both clients connected to `us`, cluster `defaultfusion3`.
+
+Result:
+
+- This was effectively another `us` run, not a distinct region comparison.
+- In-room RTT was similar to the fixed `us` control, usually about `0.104-0.112` seconds after joining.
+- Clean moving-player windows reproduced the same split:
+  - Built-in remote root: `remote_pos_changes_per_sec ~= 10.4-10.9`
+  - RPC delivery: `rpc_pulses_per_sec ~= 29.8-30.2`
+  - RPC-position marker: `rpc_marker_changes_per_sec ~= 29.3-30.2`
+  - No RPC sequence gaps: `rpc_seq_gaps = 0`
+  - Built-in root lag/error against the RPC-carried position: `avg_rpc_root_delta_px ~= 6.0-6.5`
+
+Representative clean moving-player samples:
+
+```text
+remote_pos_changes_per_sec=10.4 avg_change_ms=99.1 rpc_pulses_per_sec=29.8 rpc_marker_changes_per_sec=29.3 avg_rpc_root_delta_px=6.33
+remote_pos_changes_per_sec=10.9 avg_change_ms=98.5 rpc_pulses_per_sec=30.2 rpc_marker_changes_per_sec=29.3 avg_rpc_root_delta_px=6.14
+remote_pos_changes_per_sec=10.4 avg_change_ms=97.4 rpc_pulses_per_sec=29.8 rpc_marker_changes_per_sec=29.8 avg_rpc_root_delta_px=6.36
+remote_pos_changes_per_sec=10.9 avg_change_ms=99.2 rpc_pulses_per_sec=30.2 rpc_marker_changes_per_sec=30.2 avg_rpc_root_delta_px=6.42
+remote_pos_changes_per_sec=10.4 avg_change_ms=98.3 rpc_pulses_per_sec=29.8 rpc_marker_changes_per_sec=29.8 avg_rpc_root_delta_px=6.17
+```
+
+Conclusion:
+
+`Best Region` did exactly what we expected from a US test machine: it selected `us` because that region had the lowest measured ping. It did not change the cadence result. The farthest-region test is still useful because it will be the first intentionally different region comparison.
 
 ### Test E: Production Smoothing Pass
 
@@ -1059,11 +1087,39 @@ Interpretation:
 
 The custom marker path is not coupled to the low-cadence built-in root path. In the same room, same clients, same region, same 30 Hz config, a tiny custom position stream can arrive and be applied around 30/sec while `FusionSharedReplicator` built-in root transform motion still mutates around 10-11/sec. This isolates the low-cadence behavior to the built-in root transform replication/apply/threshold path, not to Photon room delivery, local FPS, physics ticks, or average latency.
 
-Planned region check after the custom RPC-position marker test:
+Region check progress after the custom RPC-position marker test:
 
-1. Current control: fixed `us` / USA.
-2. Next: `Best Region`.
-3. Then: the farthest available region from the client's measured Photon region list.
+1. Fixed `us` / USA control: completed.
+2. `Best Region`: completed; resolved to `us`, cluster `defaultfusion3`, so it reproduced the fixed `us` control.
+3. Forced `in` / India: attempted, but unavailable for this app/public cloud.
+4. Forced `asia`: completed; connected to `asia`, cluster `defaultfusion3`.
+5. Next optional region comparison: force `sa`, which measured around `190 ms` in the best-region ping list.
+
+Forced India result:
+
+- Both clients started with `region=in`.
+- Photon returned `Available regions: 4`, then the diagnostic code called `SelectRegion('in')`.
+- Both clients failed during authentication with return code `32756`: `Cloud public / Region in is not available.`
+- This means `in` is not available to the current app/public cloud setup even though the region code exists in broader Photon region lists.
+- Do not use `in` for this diagnostic unless the Photon dashboard/app plan explicitly enables it later.
+
+Forced Asia result:
+
+- Both clients started with `region=asia`.
+- Photon returned `Available regions: 4`, then the diagnostic code called `SelectRegion('asia')`.
+- Both clients connected to `asia`, cluster `defaultfusion3`.
+- In-room RTT was about `0.201-0.234` seconds, roughly double the fixed/best `us` control.
+- The subjective result was not dramatically worse, which matches the metrics: the raw built-in root path was already the limiting visual path, and the 30 Hz RPC marker path still delivered near 30/sec.
+- Clean horizontal movement windows still showed built-in root updates mostly around `9.4-10.9` visible changes/sec, while `rpc_pulses_per_sec` stayed around `29.3-30.7` with `rpc_seq_gaps=0`.
+- The RPC-position marker usually stayed around `28-30` visible changes/sec during clean movement. Lower windows and large steps occurred during idle/jump/boundary/correction moments and should not be treated as clean horizontal cadence samples.
+
+Rotation observation from the Asia run:
+
+- The user observed the player rotating unexpectedly.
+- Local player code does not intentionally rotate the `CharacterBody2D`; the player controller only applies velocity and calls `move_and_slide()`.
+- The `FusionSharedReplicator` is replicating the player root transform, and the ready log exposes `min_rotation_error=2.0`, so rotation is part of the root replication scope even though this 2D character should stay upright.
+- Follow-up test: add authority/remote `rotation_degrees` to the player diagnostic line. If authority remains `0` while the remote rotates, this is a remote root-transform apply artifact. If authority rotation also changes, something local is rotating the root before Fusion sends it.
+- Production direction for this 2D character: disable root rotation replication if the SDK exposes that knob; otherwise clamp root or visual rotation to `0` in a controlled way, or replicate position through an explicit custom path instead of relying on full root-transform replication.
 
 Region-test rules:
 
@@ -1072,6 +1128,44 @@ Region-test rules:
 - Use a fresh room name per region/profile.
 - Compare `rtt`, `remote_pos_changes_per_sec`, `rpc_pulses_per_sec`, `avg_rpc_ms`, `rpc_seq_gaps`, `sent_bps`, and `recv_bps`.
 - If `Best Region` resolves to `us`, that is expected from a US test machine and does not prove region is irrelevant.
+
+Planned client/server topology suite after the server/region checks:
+
+Goal:
+
+Determine whether the low-cadence built-in root behavior is specific to Shared Authority plus `FusionSharedReplicator`, or whether it also appears in Photon Fusion's client/server topology.
+
+Important setup note:
+
+This should not be tested by only changing `"SimulationMode"` in the existing room options. The current diagnostic scene uses `FusionSharedReplicator`. A meaningful client/server test needs a small parallel diagnostic setup using the client/server replicator path, expected to be `FusionServerReplicator`, with host/server and client roles logged clearly.
+
+Small suite:
+
+1. Client/server smoke test
+   - Create a fresh client/server diagnostic room name.
+   - Run one host/server instance and one client instance.
+   - Use the same basic player movement and same 30/30/30 send-rate target.
+   - Confirm both peers join the same room, the room reports client/server mode, authority is assigned as expected, and a moving authoritative object is visible remotely.
+
+2. Raw built-in root cadence
+   - Keep smoothing disabled, no area interest, and steady horizontal movement.
+   - Record the same metrics as the Shared raw test: `remote_pos_changes_per_sec`, `avg_change_ms`, `avg_step_px`, `avg_remote_speed`, `rtt`, `sent_bps`, and `recv_bps`.
+   - Compare directly against the Shared raw result of roughly 10-11 visible root changes/sec.
+
+3. RPC marker parity
+   - Add the same 30 Hz RPC position marker, or the closest client/server equivalent if RPC ownership rules require a small adjustment.
+   - Compare built-in root movement against marker movement.
+   - Key metrics: `rpc_pulses_per_sec`, `rpc_marker_changes_per_sec`, `rpc_seq_gaps`, `avg_rpc_marker_ms`, and `avg_rpc_root_delta_px`.
+
+4. Production presentation pass
+   - Re-enable the current production smoothing candidate.
+   - Check whether client/server mode changes visible feel, correction behavior, or bandwidth enough to matter for production.
+
+How to read the client/server suite:
+
+- If client/server built-in root cadence rises toward 30/sec while Shared stays around 10-11/sec, the issue is probably specific to Shared Authority or `FusionSharedReplicator`.
+- If client/server built-in root cadence also stays around 10-11/sec while the RPC marker still lands around 30/sec, the issue is probably common to the built-in root replication/apply path rather than Shared mode alone.
+- If client/server requires a larger scene/authority redesign before the smoke test is valid, document that and defer it to a dedicated topology spike instead of treating a half-configured run as data.
 
 Speed sensitivity check:
 
@@ -1987,7 +2081,8 @@ If this becomes a developer support report, ask:
 4. Does `FusionInterestArea.base_send_rate = 1` override this cadence for root replication?
 5. How does `fusion/serialization/float_compression` affect 2D pixel positions?
 6. Are `root_min_position_error` and `root_min_rotation_error` intended for public use, and should they be exposed/documented?
-7. Is built-in root transform replication intended for pixel-art 2D character controllers, or should this use custom replicated properties plus local render interpolation?
+7. Can root rotation replication be disabled independently of root position replication for upright 2D characters?
+8. Is built-in root transform replication intended for pixel-art 2D character controllers, or should this use custom replicated properties plus local render interpolation?
 
 ## Final Concise Summary
 
