@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://c43dj2d5ye23v"]
 
-[ext_resource type="Script" uid="uid://vp0vqnll6ibq" path="res://core/network/connection_indicator/connection_indicator.gd" id="1_ykhpc"]
+[ext_resource type="Script" uid="uid://vp0vqnll6ibq" path="res://core/network/connection_indicator/connection_screen.gd" id="1_ox7dh"]
 [ext_resource type="PackedScene" uid="uid://1yboenamk5xl" path="res://ui/progress_radial/progress_radial.tscn" id="2_1f1un"]
 [ext_resource type="Texture2D" uid="uid://dqhyp7mkoo8vi" path="res://core/network/connection_indicator/network_disconnected.svg" id="3_sd21p"]
 [ext_resource type="Texture2D" uid="uid://bwwcqfaov7k35" path="res://core/network/connection_indicator/network_error.svg" id="4_okhke"]
@@ -29,15 +29,16 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 0
-
-[node name="ConnectionIndicator" type="PanelContainer" parent="." unique_id=583683430]
-layout_mode = 2
-mouse_filter = 2
-theme_override_styles/panel = SubResource("StyleBoxFlat_bb7d4")
-script = ExtResource("1_ykhpc")
+script = ExtResource("1_ox7dh")
 connecting_scene = ExtResource("2_1f1un")
 disconnected_texture = ExtResource("3_sd21p")
 error_texture = ExtResource("4_okhke")
 
-[node name="ProgressRadial" parent="ConnectionIndicator" unique_id=970012938 instance=ExtResource("2_1f1un")]
+[node name="Indicator" type="PanelContainer" parent="." unique_id=583683430]
+unique_name_in_owner = true
+layout_mode = 2
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_bb7d4")
+
+[node name="ProgressRadial" parent="Indicator" unique_id=970012938 instance=ExtResource("2_1f1un")]
 layout_mode = 2

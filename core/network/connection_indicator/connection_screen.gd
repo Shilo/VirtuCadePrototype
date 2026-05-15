@@ -1,8 +1,10 @@
-extends PanelContainer
+extends CenterContainer
 
 @export var connecting_scene: PackedScene
 @export var disconnected_texture: Texture2D
 @export var error_texture: Texture2D
+
+@onready var _indicator: PanelContainer = %Indicator
 
 var _current_status := -1
 
@@ -17,7 +19,7 @@ func _connection_status_changed(status: FusionClient.ConnectionStatus) -> void:
 		return
 	_current_status = status
 
-	for child in get_children():
+	for child in _indicator.get_children():
 		child.queue_free()
 
 	match _current_status:
@@ -40,14 +42,14 @@ func _show_texture(texture: Texture2D) -> void:
 
 	var texture_rect := TextureRect.new()
 	texture_rect.texture = texture
-	add_child(texture_rect)
+	_indicator.add_child(texture_rect)
 
 
 func _show_scene(scene: PackedScene) -> void:
 	if not scene:
 		return
 
-	add_child(scene.instantiate())
+	_indicator.add_child(scene.instantiate())
 
 
 func _normalize_status(status: FusionClient.ConnectionStatus) -> FusionClient.ConnectionStatus:
