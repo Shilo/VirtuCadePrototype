@@ -65,7 +65,7 @@ Status: solved.
 
 ## Official Sample Benchmark Plan
 
-Status: planned after the custom RPC-position marker test, region checks, and client/server topology suite.
+Status: next after the region checks. Start with the official starter `2-platformer` sample, then optionally test racing.
 
 Official Godot sample targets available locally:
 
@@ -75,9 +75,10 @@ Official Godot sample targets available locally:
    - Default region in sample project: `eu`
    - Candidate scenes/scripts:
      - `1-third_person_character`
-     - `2-platformer`
+     - `2-platformer` (best first target: `2-platformer/2-platformer.tscn`)
      - `3-shooter`
    - Player movement roots are `CharacterBody3D` objects with `FusionSharedReplicator`.
+   - `2-platformer/scenes/player.tscn` uses `FusionSharedReplicator.root_replication_mode = 1`, making it the closest official sample analog to the current player-root test.
 
 2. Racing starter kit:
    - Path: `C:\Users\shilo\Downloads\photon-fusion-godot-starter-kit-racing_3.0.0.407`
@@ -87,6 +88,7 @@ Official Godot sample targets available locally:
      - `scenes/main.tscn`
      - `scripts/vehicle.gd`
    - Vehicle roots are `RigidBody3D` objects with `FusionSharedReplicator`.
+   - Caveat: its `project.godot` still has the placeholder app id `11111111-1111-1111-1111-111111111111`, so it needs the real Photon app id before it can be used as a live benchmark.
 
 Why this matters:
 
@@ -98,6 +100,7 @@ Benchmark logging target:
 
 - Add the same style of `[NetDiag]` and `[PlayerDiag]` logs to each sample without changing its default gameplay settings.
 - Log the sample's default room config, region, `FusionSharedReplicator` root settings, FPS/physics TPS, RTT, bandwidth, and remote root position changes/sec.
+- Do not change sample gameplay, room, replicator, smoothing, interest, or send-rate settings for the official-sample benchmark. The only intentional sample setting change for the first control is region: `connection/default_region = "us"`.
 - Use smoothing-disabled raw tests only as a second pass. First pass should capture the sample's true default behavior.
 - Avoid adding our smoothing/root tuning to the samples until after their default baseline is measured.
 
@@ -1118,8 +1121,21 @@ Rotation observation from the Asia run:
 - The user observed the player rotating unexpectedly.
 - Local player code does not intentionally rotate the `CharacterBody2D`; the player controller only applies velocity and calls `move_and_slide()`.
 - The `FusionSharedReplicator` is replicating the player root transform, and the ready log exposes `min_rotation_error=2.0`, so rotation is part of the root replication scope even though this 2D character should stay upright.
-- Follow-up test: add authority/remote `rotation_degrees` to the player diagnostic line. If authority remains `0` while the remote rotates, this is a remote root-transform apply artifact. If authority rotation also changes, something local is rotating the root before Fusion sends it.
-- Production direction for this 2D character: disable root rotation replication if the SDK exposes that knob; otherwise clamp root or visual rotation to `0` in a controlled way, or replicate position through an explicit custom path instead of relying on full root-transform replication.
+- First rotation-instrumented Asia log: every printed authority and remote player line reported `rotation_deg=0.0`, `global_rotation_deg=0.0`, and `scale=(1.0, 1.0)`.
+- Interpretation: no persistent root rotation or scale mutation was captured at the normal 2-second diagnostic print interval. The observed visual rotation may be transient between prints, may involve a child visual rather than the root, or may be a visual misread caused by large corrections/marker motion.
+- Follow-up instrumentation tracked min/max root rotation and scale across each diagnostic window. A later `us` run still reported `rotation_window_deg=(0.0, 0.0)`, `global_rotation_window_deg=(0.0, 0.0)`, and `scale_window=((1.0, 1.0), (1.0, 1.0))`.
+- Resolved: the user identified the visible rotation as the ghost/marker rigidbody colliding with the player, not Fusion rotating the replicated player root. Treat this as closed noise for the root-cadence investigation.
+
+Forced USA retest after rotation instrumentation:
+
+- Both clients connected to `us`, cluster `defaultfusion3`.
+- In-room RTT was about `0.102-0.114` seconds.
+- Root rotation and scale stayed fixed on authority and remote diagnostic windows.
+- Clean horizontal movement windows reproduced the same split:
+  - Built-in remote root: usually about `10.4-10.9` visible changes/sec.
+  - RPC delivery: about `29.8-30.2` pulses/sec, with `rpc_seq_gaps=0`.
+  - RPC-position marker: about `29.8-30.2` changes/sec during clean movement.
+- Conclusion: the `us` control still reproduces the root-cadence issue. Region/RTT affects latency, but it does not explain why the built-in root path applies around 10-11/sec while the RPC position marker path applies around 30/sec.
 
 Region-test rules:
 
