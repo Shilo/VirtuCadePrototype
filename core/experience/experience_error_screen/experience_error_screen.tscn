@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://4byigfhn7if4"]
 
-[ext_resource type="Script" uid="uid://d4b3wl6ifxk1y" path="res://core/experience_error_screen/experience_error_screen.gd" id="1_q0ppf"]
-[ext_resource type="Texture2D" uid="uid://cab8m5d2fn6io" path="res://core/experience_error_screen/experience_error_screen.svg" id="2_6i8ie"]
+[ext_resource type="Script" uid="uid://d4b3wl6ifxk1y" path="res://core/experience/experience_error_screen/experience_error_screen.gd" id="1_q0ppf"]
+[ext_resource type="Texture2D" uid="uid://cab8m5d2fn6io" path="res://core/experience/experience_error_screen/experience_error_screen.svg" id="2_6i8ie"]
 
 [node name="Error" type="CenterContainer" unique_id=1856526107]
 anchors_preset = 15
