@@ -2208,3 +2208,31 @@ Default-30-Hz tick-rate / cadence limits observed in this project:
 | Final visible remote presentation with smoothing at 30 Hz | About 10-11/sec when snap is misconfigured | 60/sec, matching render cadence | Target 60 FPS visual motion from 30 Hz network sends. |
 
 The 60 Hz send-rate tests were diagnostic only. They showed that higher send rates can work, but they are not the recommended "highest" for this game because the 30 Hz setup already reaches 60 FPS visual presentation with much lower bandwidth.
+
+## Photon Developer Summary
+
+Environment: Godot `4.6.2`, Fusion Godot SDK `3.0.0.1973`, Shared Authority, region `us`, two local clients, RTT about `100ms`.
+
+Core issue: `FusionSharedReplicator` root replication on `CharacterBody2D/3D` appears to apply remote root transform updates far below configured send rates when root smoothing is disabled.
+
+Observed visible root changes, where each rate set is `RoomSendRate / ClientSendRate / AuthoritySendRate`:
+
+```text
+30/30/30 Hz, no AOI, smoothing off        -> about 10-11/sec
+60/60/60 Hz, no AOI, smoothing off        -> about 15-16/sec
+30/30/30 Hz, AOI base_send_rate=1         -> about 20-21/sec
+60/60/60 Hz, AOI base_send_rate=1         -> about 30-32/sec
+```
+
+Control: under the same room/settings, a tiny `Fusion.rpc(...)` position marker delivered/applied at about `29-30/sec` with no sequence gaps, while built-in root replication remained about `10-11/sec`. This points away from transport, FPS, V-Sync, physics tick rate, or general Photon delivery, and toward the built-in root replication/apply path.
+
+Official samples: the official 3D platformer looks smooth with default smoothing enabled. Disabling only root smoothing reproduces the low raw cadence, so this does not appear project-specific. The racing sample behaves better because `RigidBody3D` velocity/forecast continues motion locally between corrections, making it not directly comparable to raw `CharacterBody` transform snaps.
+
+Practical baseline for this project: keep 30 Hz room/client/authority send rates, `update_interval=1`, `DefaultPriority=2`, no hidden min-error tweaks, no AOI cadence workaround, and use root smoothing with `root_smooth_time=0.08` and `root_snap_distance=100.0`.
+
+Questions for Photon:
+
+1. Is about `10Hz` raw root application expected for Shared Authority `CharacterBody` roots at 30 Hz?
+2. Why does RPC delivery reach 30 Hz while built-in root replication does not under the same room?
+3. Does `FusionInterestArea.base_send_rate=1` intentionally boost root cadence, and why does it cause such a large bandwidth jump in a tiny two-player scene?
+4. For pixel-art `CharacterBody2D`, is the intended approach built-in root smoothing, or custom replicated position plus local interpolation?
