@@ -1,3 +1,6 @@
 # Godot 4+ specific ignores
 .godot/
 /android/
+
+# Fusion/Godot may create Windows DLL backup files while the editor DLL is loaded.
+/addons/fusion/bin/~*.dll
