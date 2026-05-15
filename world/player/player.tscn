@@ -29,6 +29,8 @@ shape = SubResource("CapsuleShape2D_onrkg")
 [node name="FusionSharedReplicator" type="FusionSharedReplicator" parent="." unique_id=2065068805]
 owner_mode = 1
 root_replication_mode = 1
+root_smooth_time = 0.08
+root_snap_distance = 100.0
 unique_name_in_owner = true
 process_priority = -2147483647
 process_physics_priority = -2147483647
