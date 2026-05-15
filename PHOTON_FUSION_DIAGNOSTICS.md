@@ -4,7 +4,7 @@ Living debug log for the Photon Fusion 3 for Godot shared-authority test project
 Keep this file updated until the lag/cadence cause is found. If no solution is found,
 this should become the report sent to Photon/Fusion developers.
 
-Last updated: 2026-05-15 09:03 PDT
+Last updated: 2026-05-15 09:42 PDT
 
 ## Project Context
 
@@ -65,7 +65,7 @@ Status: solved.
 
 ## Official Sample Benchmark Plan
 
-Status: next after the region checks. Start with the official starter `2-platformer` sample, then optionally test racing.
+Status: official starter `2-platformer` default benchmark completed with region changed to `us`. A follow-up raw-cadence variant has now been prepared by disabling root smoothing in the starter `2-platformer` player and in both racing vehicle scenes, with sample regions set to `us`.
 
 Official Godot sample targets available locally:
 
@@ -117,6 +117,69 @@ if not replicator.has_authority():
 ```
 
 In this project, global Godot physics interpolation is already off, so that line is currently defensive/redundant.
+
+Official starter `2-platformer` default benchmark result:
+
+- Setup: official sample defaults preserved; only `connection/default_region` changed to `us`.
+- Instrumentation: print-only `[SampleDiag]` logging in the sample player script.
+- Applied sample room config: `RoomSendRate = 30`, `SimulationMode = Shared`, `DefaultPriority = 2`; the sample did not explicitly override `ClientSendRate` or `AuthoritySendRate` in the logged config.
+- Player root settings: `root_replication_mode = 1`, `root_smoothing = true`, `root_smooth_time = 0.15`, `root_snap_distance = 5.0`, `root_min_position_error = 1.0`, `root_min_rotation_error = 2.0`.
+- RTT during the `us` run was roughly `0.103-0.107` seconds.
+- Authority player logs correctly reported `remote_pos_changes_per_sec = 0.0`.
+- Idle remote player logs correctly reported `remote_pos_changes_per_sec = 0.0`.
+- Early/partial moving windows varied, for example `13.9`, `29.8`, `47.5`, and `50.1` changes/sec.
+- Clean moving remote windows commonly reached render cadence, for example `59.5-60.0` changes/sec.
+
+Conclusion:
+
+The official starter `2-platformer` sample does not reproduce the raw 10-11 visible-update/sec symptom under its default settings. Its default player root has Fusion smoothing enabled, and moving remote players present at or near render cadence. This is a default-behavior benchmark, not an apples-to-apples raw root-send benchmark. The goal is not to force 60 network ticks/sec; the target is to get acceptable presentation from the default 30 Hz network setting, and ideally keep the underlying movement feed close to that 30 Hz default instead of collapsing toward 10 Hz. Because the official sample settings should remain unchanged for this control, use this result as evidence that the supported/default presentation path is smooth, not as proof that unsmoothed built-in root transforms apply at 60/sec.
+
+Current raw sample variant:
+
+- Starter sample project now explicitly has `connection/default_region = "us"`.
+- Starter `2-platformer/scenes/player.tscn` now has `root_smoothing = false` on the player `FusionSharedReplicator`.
+- Racing kit project now has `connection/default_region = "us"`.
+- Racing `scenes/vehicle.tscn` and `scenes/vehicle-motorcycle.tscn` now have `root_smoothing = false` on their `FusionSharedReplicator` nodes.
+- Racing kit now uses the real Photon app id `ec1a0329-e20f-429a-a9b3-e6a59520d44f`, so it can be used as a live benchmark.
+- Racing `scripts/vehicle.gd` now emits `[RacingDiag]` ready and periodic benchmark logs for both the car and motorcycle paths. The ready log prints root settings including `root_smoothing`; the periodic log prints RTT, sent/recv bps, remote root changes/sec, step size, and velocity.
+
+Purpose of this variant:
+
+Measure raw built-in root update cadence against the default 30 Hz network target. Smoothing is disabled only to avoid counting render-frame interpolation as network/root updates.
+
+Raw starter `2-platformer` benchmark result:
+
+- Setup: `us` region, official sample `2-platformer`, default room config, `root_smoothing = false` on the player root only.
+- Ready logs confirmed `root_smoothing=false`, `smooth_time=0.15`, `snap_distance=5.0`, `min_position_error=1.0`, and `RoomSendRate=30`.
+- RTT was roughly `0.103-0.111` seconds.
+- Clean moving remote windows repeatedly clustered around `10.4-10.9` changes/sec.
+- Typical timing was `avg_change_ms ~= 93-94 ms`, with min around `82 ms` and max around `100-102 ms` in steady windows.
+- Representative moving lines:
+  - `remote_pos_changes_per_sec=10.9 avg_change_ms=93.7 avg_step_m=0.339 avg_remote_speed_mps=3.795`
+  - `remote_pos_changes_per_sec=10.4 avg_change_ms=94.2 avg_step_m=0.356 avg_remote_speed_mps=3.971`
+  - `remote_pos_changes_per_sec=10.9 avg_change_ms=94.4 avg_step_m=0.359 avg_remote_speed_mps=3.982`
+  - `remote_pos_changes_per_sec=10.4 avg_change_ms=93.3 avg_step_m=0.345 avg_remote_speed_mps=3.877`
+- Lower windows like `2.0`, `3.0`, `3.5`, `4.0`, and `8.9` appeared during partial/transition/idle windows and are not the clean sustained-movement cadence.
+
+Conclusion:
+
+The official starter `2-platformer` sample reproduces the same raw low-cadence behavior when smoothing is disabled. This strongly suggests the observed raw ~10 Hz root movement is not caused by this project's 2D `CharacterBody2D` setup, pixel scale, region, renderer, or local project scene wiring. The official sample's smooth default behavior comes from `FusionSharedReplicator` root smoothing, not from raw root transforms applying near the 30 Hz room send rate.
+
+Raw racing benchmark result:
+
+- Setup: `us` region, racing starter kit, real app id, default room config, `root_smoothing = false` on vehicle roots.
+- Ready logs confirmed `root_smoothing=false`, `smooth_time=0.15`, `snap_distance=5.0`, `min_position_error=1.0`, `min_rotation_error=2.0`, and `RoomSendRate=30`.
+- Moving remote motorcycle windows commonly reported `59.5-60.0` root changes/sec with `avg_change_ms ~= 16.7 ms`.
+- Representative moving lines:
+  - `remote_pos_changes_per_sec=59.5 avg_change_ms=16.8 avg_step_m=0.039 avg_remote_speed_mps=2.352 linear_velocity=(0.0, 0.0, -3.369471) angular_velocity=(-7.537206, 0.0, 0.0)`
+  - `remote_pos_changes_per_sec=60.0 avg_change_ms=16.7 avg_step_m=0.063 avg_remote_speed_mps=3.791 linear_velocity=(0.0, 0.0, 3.337986) angular_velocity=(8.31148, 0.0, 0.0)`
+  - `remote_pos_changes_per_sec=60.0 avg_change_ms=16.7 avg_step_m=0.154 avg_remote_speed_mps=9.296 linear_velocity=(-8.165832, 0.0, -2.082713) angular_velocity=(-4.198278, -0.0, 17.99801)`
+- Idle/stationary remote vehicle windows correctly reported `0.0` changes/sec.
+- Bandwidth was higher than the platformer sample during motion; recv bps commonly showed roughly `6600-11880` in these logs.
+
+Interpretation:
+
+The racing result is not equivalent to a CharacterBody root receiving raw transform snaps. The vehicle root is a `RigidBody3D`, and the remote copies carry non-zero `linear_velocity` and `angular_velocity`. With smoothing disabled, the remote rigid body can still move every physics/render frame through local physics integration/extrapolation while network updates correct the state. That is why the raw visual cadence is much better than the `CharacterBody` samples even with `root_smoothing=false`.
 
 ## Key Log Evidence
 
@@ -2086,6 +2149,8 @@ With default/global root replication, raw remote root motion was below the confi
 So, for raw sync cadence: area interest enabled with `base_send_rate = 1` is faster, but much heavier. Area interest disabled is cheaper, but lower cadence. `base_send_rate = 0` and `base_send_rate = 2` were worse than `base_send_rate = 1`. `DefaultPriority = 1` did not materially improve cadence or bandwidth. `root_min_position_error = 0.1` improves pixel precision but did not fix cadence. `root_snap_distance = 5.0` caused ordinary corrections to snap visibly, so snap distance should stay high enough for normal correction distances.
 
 Current two-player movement tradeoff for the tested root-transform case: keep `RoomSendRate = 30`, `root_replication_mode = AUTO`, `interest_mode = 0`, no `FusionInterestArea`, `root_smoothing = true`, `root_smooth_time = 0.08`, `root_snap_distance = 100.0`, and `root_min_position_error = 0.1`. This does not make raw sync cadence maximal; it chooses low bandwidth and smooth presentation over expensive area-interest delivery in a tiny test with nothing to cull. Production-scale interest areas remain a separate requirement.
+
+The official starter `2-platformer` sample supports this direction and also reproduces the raw issue. With official defaults preserved and only the region changed to `us`, the sample used `root_smoothing = true`, `root_smooth_time = 0.15`, `root_snap_distance = 5.0`, and `root_min_position_error = 1.0`, and clean moving remote windows commonly presented at `59.5-60.0` visible changes/sec. That is a smoothed render result, not a 60 Hz network target. With only `root_smoothing = false` changed for a raw benchmark, the same sample repeatedly clustered around `10.4-10.9` visible root changes/sec under `RoomSendRate = 30`. The racing sample behaves differently because its roots are `RigidBody3D` objects with non-zero remote velocities, so local physics integration keeps the remote body moving between network corrections. So the actual target remains default 30 Hz networking with acceptable presentation, but raw `CharacterBody` root replication appears to degrade toward 10 Hz even in Photon's own starter sample unless smoothing hides it.
 
 ## Questions For Photon/Fusion Developers If Needed
 
