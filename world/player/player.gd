@@ -1,8 +1,19 @@
 class_name Player extends CharacterBody2D
 
-
 const SPEED = 100.0
 const JUMP_VELOCITY = -400.0
+
+@onready var _replicator: FusionSharedReplicator = %FusionSharedReplicator
+
+
+func _ready() -> void:
+	if not _replicator.has_authority():
+		set_physics_process(false)
+		set_process(false)
+		set_process_input(false)
+		set_process_shortcut_input(false)
+		set_process_unhandled_input(false)
+		set_process_unhandled_key_input(false)
 
 
 func _unhandled_input(event: InputEvent) -> void:
