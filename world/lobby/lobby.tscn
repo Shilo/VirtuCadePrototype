@@ -61,8 +61,5 @@ position = Vector2(-176, 144)
 use_door = NodePath("../Door")
 up_door = NodePath("../Door2")
 
-[node name="IdleCamera" type="Camera2D" parent="World" unique_id=1458535833]
-zoom = Vector2(2, 2)
-
 [node name="Spawn" type="Marker2D" parent="World" unique_id=924513256]
 unique_name_in_owner = true

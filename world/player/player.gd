@@ -8,6 +8,10 @@ const JUMP_VELOCITY = -400.0
 
 func _ready() -> void:
 	if not _replicator.has_authority():
+		var interest_area: FusionInterestArea = %FusionInterestArea
+		interest_area.enabled = false
+		interest_area.debug_draw = false
+
 		set_physics_process(false)
 		set_process(false)
 		set_process_input(false)
