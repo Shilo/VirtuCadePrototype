@@ -22,23 +22,32 @@ corner_radius_bottom_right = 68
 corner_radius_bottom_left = 68
 shadow_color = Color(0, 0, 0, 0)
 
-[node name="ConnectionScreen" type="CenterContainer" unique_id=594658929]
+[node name="ConnectionScreen" type="ColorRect" unique_id=464847132]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.0756, 0.08522, 0.12, 0)
+script = ExtResource("1_ox7dh")
+connecting_scene = ExtResource("2_1f1un")
+disconnected_texture = ExtResource("3_sd21p")
+error_texture = ExtResource("4_okhke")
+
+[node name="ConnectionScreen" type="CenterContainer" parent="." unique_id=594658929]
+layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 0
-script = ExtResource("1_ox7dh")
-connecting_scene = ExtResource("2_1f1un")
-disconnected_texture = ExtResource("3_sd21p")
-error_texture = ExtResource("4_okhke")
 
-[node name="Indicator" type="PanelContainer" parent="." unique_id=583683430]
+[node name="Indicator" type="PanelContainer" parent="ConnectionScreen" unique_id=583683430]
 unique_name_in_owner = true
 layout_mode = 2
 mouse_filter = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_bb7d4")
 
-[node name="ProgressRadial" parent="Indicator" unique_id=970012938 instance=ExtResource("2_1f1un")]
+[node name="ProgressRadial" parent="ConnectionScreen/Indicator" unique_id=970012938 instance=ExtResource("2_1f1un")]
 layout_mode = 2

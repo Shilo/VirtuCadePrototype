@@ -7,4 +7,3 @@ func _ready():
 func _on_room_joined():
 	var player = %FusionSpawner.spawn()
 	player.global_position = %Spawn.global_position
-	print("======== joined room")

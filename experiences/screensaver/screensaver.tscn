@@ -1,12 +1,28 @@
 [gd_scene format=3 uid="uid://bvcvrjks32y0v"]
 
 [ext_resource type="Script" uid="uid://cxug0etq6cqh1" path="res://experiences/screensaver/screensaver.gd" id="1_in61b"]
+[ext_resource type="Script" path="res://experiences/screensaver/logo.gd" id="2_bg3o8"]
 [ext_resource type="Texture2D" uid="uid://bvamry6nm2hut" path="res://icon.svg" id="2_wyeo1"]
+
+[sub_resource type="FusionReplicationConfig" id="FusionReplicationConfig_jc8lb"]
+property_count = 1
+properties/0/path = NodePath(":modulate")
+properties/0/max_array_capacity = 0
+properties/0/interface_tag = ""
 
 [node name="Screensaver" type="Node2D" unique_id=462786916]
 script = ExtResource("1_in61b")
 
 [node name="Logo" type="Sprite2D" parent="." unique_id=1993091136]
 unique_name_in_owner = true
-position = Vector2(616, 368)
 texture = ExtResource("2_wyeo1")
+script = ExtResource("2_bg3o8")
+
+[node name="FusionSharedReplicator" type="FusionSharedReplicator" parent="Logo" unique_id=247012393]
+owner_mode = 3
+replication_config = SubResource("FusionReplicationConfig_jc8lb")
+root_replication_mode = 1
+root_smoothing = false
+unique_name_in_owner = true
+process_priority = -2147483647
+process_physics_priority = -2147483647

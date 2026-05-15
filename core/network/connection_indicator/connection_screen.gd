@@ -1,4 +1,4 @@
-extends CenterContainer
+extends ColorRect
 
 @export var connecting_scene: PackedScene
 @export var disconnected_texture: Texture2D

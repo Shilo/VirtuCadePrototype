@@ -13,11 +13,15 @@ func load_experience(experience_name: String) -> void:
 	var error: Error = get_tree().change_scene_to_file(experience_path)
 	if error:
 		_show_load_error(experience_name, "Failed to change scene \"" + experience_path + "\". Error: " + str(error))
+		return
+
+	NetworkManager.join_experience_room(experience_name)
 
 
 func unload_experience() -> void:
 	if _is_current_scene_experience():
 		get_tree().change_scene_to_file(main_scene_path)
+		NetworkManager.join_lobby_room()
 
 
 func get_experience_scene_path(experience_name: String) -> String:
@@ -27,6 +31,7 @@ func get_experience_scene_path(experience_name: String) -> String:
 func _show_load_error(experience_name: String, error_message: String = "") -> void:
 	push_error("[" + str(self) + "] " + error_message)
 	ExperienceErrorScreen.show_error(experience_name)
+	NetworkManager.join_experience_room(experience_name)
 
 
 func _unhandled_input(event: InputEvent) -> void:
