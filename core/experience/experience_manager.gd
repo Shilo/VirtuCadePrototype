@@ -1,7 +1,7 @@
 extends Node
 
 const base_path: StringName = &"res://experiences/"
-const main_scene_path: StringName = &"res://main.tscn"
+var main_scene_path: StringName = ProjectSettings.get_setting("application/run/main_scene")
 
 
 func load_experience(experience_name: String) -> void:
