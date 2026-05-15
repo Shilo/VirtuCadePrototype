@@ -1,6 +1,7 @@
 extends Node2D
 
 const SPEED: float = 220.0
+const PLAYFIELD_SIZE := Vector2(1280.0, 720.0)
 
 @onready var logo: ScreensaverLogo = %Logo
 
@@ -31,10 +32,9 @@ func _refresh_authority_state() -> void:
 
 
 func _process(delta: float) -> void:
-	var viewport_size := get_viewport_rect().size
 	var half := logo.texture.get_size() * logo.scale.abs() * 0.5
 	var min_pos := half
-	var max_pos := viewport_size - half
+	var max_pos := PLAYFIELD_SIZE - half
 
 	var new_pos := logo.position + velocity * delta
 	var bounced_x := false
