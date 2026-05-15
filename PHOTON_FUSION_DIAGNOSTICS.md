@@ -4,7 +4,7 @@ Living debug log for the Photon Fusion 3 for Godot shared-authority test project
 Keep this file updated until the lag/cadence cause is found. If no solution is found,
 this should become the report sent to Photon/Fusion developers.
 
-Last updated: 2026-05-15 08:20 PDT
+Last updated: 2026-05-15 08:55 PDT
 
 ## Project Context
 
@@ -26,8 +26,10 @@ Files currently modified for diagnostics:
 - `world/player/player.tscn`
 - `project.godot`
 
-Current important runtime/test settings:
+Current important production-shaped movement baseline settings:
 
+- Active discovery profile: `Profile.RPC_MARKER_RAW_DEFAULT` (`rpc_marker_raw_default` room prefix)
+- The active discovery profile temporarily overrides `root_smoothing = false`, `rpc_pulse_hz = 30`, and `rpc_marker_enabled = true` to expose raw behavior.
 - `RoomSendRate = 30`
 - `ClientSendRate = 30`
 - `AuthoritySendRate = 30`
@@ -63,7 +65,7 @@ Status: solved.
 
 ## Official Sample Benchmark Plan
 
-Status: planned after the current RPC pulse test and region checks.
+Status: planned after the custom RPC-position marker test and region checks.
 
 Official Godot sample targets available locally:
 
@@ -934,9 +936,9 @@ The original visual lag was primarily caused by evaluating raw replicated root u
 
 ## Confirmation Matrix: Profile-Based Retests
 
-Status: speed tests completed; next discovery profile ready to run.
+Status: speed tests and corrected RPC pulse test completed; custom RPC-position marker profile ready to run.
 
-Current active profile after adding the RPC pulse discovery: `Profile.RPC_PULSE_RAW_DEFAULT`.
+Current active profile after adding the custom position-stream discovery: `Profile.RPC_MARKER_RAW_DEFAULT`.
 
 To avoid hand-mixing settings, network test profiles now live in:
 
@@ -947,7 +949,7 @@ core/network/network_test_profile.gd
 Change only this line before each run:
 
 ```gdscript
-const ACTIVE_PROFILE := Profile.RPC_PULSE_RAW_DEFAULT
+const ACTIVE_PROFILE := Profile.RPC_MARKER_RAW_DEFAULT
 ```
 
 The room name is automatically changed to `lobby_<profile_id>`, so each profile gets a fresh room config after both clients restart. Run both clients from the same project copy after changing the active profile.
@@ -965,16 +967,20 @@ Recommended run order:
 
 Next discovery check:
 
-1. `Profile.RPC_PULSE_RAW_DEFAULT`
-   - Purpose: test whether Fusion's RPC route can deliver a simple 30/sec signal while default root replication still shows only about 10-11 raw position changes/sec.
+1. `Profile.RPC_MARKER_RAW_DEFAULT`
+   - Purpose: test whether the already-proven 30/sec Fusion RPC route can also drive a separate diagnostic position marker at 30/sec while default root replication still shows only about 10-11 raw position changes/sec.
    - Settings: 30/30/30 send rates, priority 2, update interval 1, no area interest, speed 1x.
-   - Diagnostic-only changes: `root_smoothing = false`, `rpc_pulse_hz = 30`.
+   - Diagnostic-only changes: `root_smoothing = false`, `rpc_pulse_hz = 30`, `rpc_marker_enabled = true`.
+   - Visual behavior: on remote player objects only, a green translucent `RpcPositionMarker` is placed at the RPC-carried position with a `Vector2(0, -30)` visual offset, so it can be compared against the built-in replicated root without changing gameplay/root motion.
    - Read these fields on the remote moving player:
      - `remote_pos_changes_per_sec`: how often the remote root visibly changed.
      - `rpc_pulses_per_sec`: how often the separate diagnostic RPC arrived.
      - `avg_rpc_ms`: average time between diagnostic RPC arrivals.
      - `rpc_seq_gaps`: missed diagnostic RPC sequence numbers.
      - `avg_rpc_root_delta_px`: distance between the position carried by the RPC and the remote root's currently displayed position.
+     - `rpc_marker_changes_per_sec`: how often the custom RPC-position marker changed position.
+     - `avg_rpc_marker_ms`: average time between marker position changes.
+     - `avg_rpc_marker_step_px`: average marker movement step size.
 
 How to read the RPC pulse test:
 
@@ -983,7 +989,77 @@ How to read the RPC pulse test:
 - If `rpc_seq_gaps` is high, the unreliable RPC stream is dropping messages. That would weaken this test, and we should rerun with reliable or lower-rate pulses.
 - This test does not prove RPC is the correct production movement solution. It is only a fork-in-the-road diagnostic.
 
-Planned region check after the RPC pulse test:
+First attempted RPC pulse result:
+
+- Root result reproduced the known issue: the moving remote player still showed roughly `8.0` to `10.9` raw root position changes/sec at default 30 Hz/no-area settings.
+- `rpc_pulses_per_sec` stayed `0.0`, so the first version did not actually test Fusion RPC delivery.
+- Cause found from official sample code: Photon's Godot samples call `Fusion.rpc(...)`, not `Node.rpc(...)`, for Fusion-routed RPCs.
+- Diagnostic code has been corrected to call `Fusion.rpc(rpc_netdiag_pulse, ...)`.
+- Rerun the same `Profile.RPC_PULSE_RAW_DEFAULT` test before drawing conclusions from the RPC fields.
+
+Corrected RPC pulse result:
+
+- Status: completed and decisive.
+- Room config remained default 30 Hz/no-area:
+  - `RoomSendRate = 30`
+  - `ClientSendRate = 30`
+  - `AuthoritySendRate = 30`
+  - `DefaultPriority = 2`
+  - `interest_mode = 0`
+  - no `FusionInterestArea`
+  - `root_smoothing = false`
+- The diagnostic RPC route delivered almost exactly the intended 30/sec:
+  - `rpc_pulses_per_sec = 29.8-30.2`
+  - `avg_rpc_ms ~= 32.8-33.6`
+  - `rpc_seq_gaps = 0`
+- The same remote moving player root still only changed around 10/sec:
+  - `remote_pos_changes_per_sec = 9.9-10.9`
+  - `avg_change_ms ~= 97.6-103.5`
+  - `avg_step_px ~= 8.7-9.5`
+- Representative moving-player samples:
+
+```text
+remote_pos_changes_per_sec=10.4 avg_change_ms=98.3 avg_step_px=9.21 rpc_pulses_per_sec=30.2 rpc_seq_gaps=0 avg_rpc_root_delta_px=6.23
+remote_pos_changes_per_sec=10.9 avg_change_ms=98.4 avg_step_px=9.24 rpc_pulses_per_sec=30.2 rpc_seq_gaps=0 avg_rpc_root_delta_px=6.45
+remote_pos_changes_per_sec=9.9 avg_change_ms=103.5 avg_step_px=9.50 rpc_pulses_per_sec=30.2 rpc_seq_gaps=0 avg_rpc_root_delta_px=6.23
+remote_pos_changes_per_sec=10.4 avg_change_ms=99.2 avg_step_px=8.97 rpc_pulses_per_sec=29.8 rpc_seq_gaps=0 avg_rpc_root_delta_px=6.22
+remote_pos_changes_per_sec=10.9 avg_change_ms=97.7 avg_step_px=9.02 rpc_pulses_per_sec=29.8 rpc_seq_gaps=0 avg_rpc_root_delta_px=6.28
+```
+
+Interpretation:
+
+This rules out general Photon room delivery as the cause. The same room, same clients, same region, and same 30 Hz config can deliver a small RPC signal at 30/sec with no sequence gaps. The low 10-11/sec behavior is therefore specific to built-in root transform replication/apply behavior, or to the way `FusionSharedReplicator` decides when root transform changes are worth sending/applying under default no-area settings.
+
+This also means the earlier "moving faster might cause more updates" theory is dead twice: speed did not increase root update rate, and an explicit 30/sec signal did arrive while root updates stayed around 10/sec.
+
+Custom RPC-position marker test:
+
+- Status: completed and decisive.
+- This test does not replace or move the real player root. It adds a remote-only visual marker driven by the same 30/sec Fusion RPC payload.
+- Clean steady horizontal movement produced exactly the split this test was designed to check:
+  - Built-in remote root: `remote_pos_changes_per_sec ~= 10.4-10.9`
+  - RPC delivery: `rpc_pulses_per_sec ~= 29.3-30.7`
+  - RPC-position marker: `rpc_marker_changes_per_sec ~= 29.3-30.2`
+  - No RPC sequence gaps: `rpc_seq_gaps = 0`
+  - Built-in root lag/error against the RPC-carried position: `avg_rpc_root_delta_px ~= 6.1-7.2`
+
+Representative clean moving-player samples:
+
+```text
+remote_pos_changes_per_sec=10.4 rpc_pulses_per_sec=30.2 rpc_marker_changes_per_sec=30.2 avg_rpc_marker_ms=33.6 avg_rpc_marker_step_px=3.81 avg_rpc_root_delta_px=7.2
+remote_pos_changes_per_sec=10.9 rpc_pulses_per_sec=29.8 rpc_marker_changes_per_sec=29.3 avg_rpc_marker_ms=35.1 avg_rpc_marker_step_px=3.31 avg_rpc_root_delta_px=6.39
+remote_pos_changes_per_sec=10.4 rpc_pulses_per_sec=30.2 rpc_marker_changes_per_sec=30.2 avg_rpc_marker_ms=33.6 avg_rpc_marker_step_px=3.33 avg_rpc_root_delta_px=6.39
+remote_pos_changes_per_sec=10.9 rpc_pulses_per_sec=30.7 rpc_marker_changes_per_sec=29.8 avg_rpc_marker_ms=34.5 avg_rpc_marker_step_px=3.33 avg_rpc_root_delta_px=6.24
+remote_pos_changes_per_sec=10.9 rpc_pulses_per_sec=29.8 rpc_marker_changes_per_sec=30.2 avg_rpc_marker_ms=33.6 avg_rpc_marker_step_px=3.33 avg_rpc_root_delta_px=6.50
+```
+
+Some windows showed lower marker/root rates during starts, stops, jumps, or idle periods. Those are not the steady horizontal sample. The repeated clean windows are the important result.
+
+Interpretation:
+
+The custom marker path is not coupled to the low-cadence built-in root path. In the same room, same clients, same region, same 30 Hz config, a tiny custom position stream can arrive and be applied around 30/sec while `FusionSharedReplicator` built-in root transform motion still mutates around 10-11/sec. This isolates the low-cadence behavior to the built-in root transform replication/apply/threshold path, not to Photon room delivery, local FPS, physics ticks, or average latency.
+
+Planned region check after the custom RPC-position marker test:
 
 1. Current control: fixed `us` / USA.
 2. Next: `Best Region`.
@@ -1893,7 +1969,9 @@ Explicit area interest with `base_send_rate = 1` preserves smooth render-cadence
 
 The strongest current conclusion:
 
-The user's internet speed/bandwidth is not causing the low-cadence movement. Godot render/physics throttling is also not causing it. The raw sync-rate evidence points most strongly at Fusion's default/global root replication interest/send-rate scheduling. With default/global root replication, raw remote root motion was below the configured room send rate: about 10-11 visible updates/sec in 30 Hz raw tests and about 15-16 visible updates/sec in 60 Hz raw tests. Explicit area interest with `FusionInterestArea.base_send_rate = 1` increased raw cadence to about 20-21 visible updates/sec at 30 Hz and about 30-32 visible updates/sec at 60 Hz, but it also raised bandwidth dramatically. In the final two-client comparison, area interest cost roughly 58-68 kbps/client instead of hundreds of bps/client. A doubled raw update rate cannot explain a roughly 100x bandwidth increase by itself; the explicit area-interest path/payload behavior appears to account for most of the bandwidth jump in the tiny two-player test.
+The user's internet speed/bandwidth is not causing the low-cadence movement. Godot render/physics throttling is also not causing it. The corrected RPC pulse and RPC-position marker tests prove the Photon room can deliver and apply a tiny 30/sec signal between the same two clients: `rpc_pulses_per_sec` was about `29.3-30.7`, `rpc_marker_changes_per_sec` was about `29.3-30.2`, and `rpc_seq_gaps = 0`. At the same time, the built-in replicated root still moved at only about `9.9-10.9` visible updates/sec. So the problem is not general Photon delivery. It is specific to `FusionSharedReplicator` built-in root transform replication/apply behavior, or to the way that root path decides when a transform update is worth sending/applying under default no-area settings.
+
+With default/global root replication, raw remote root motion was below the configured room send rate: about 10-11 visible updates/sec in 30 Hz raw tests and about 15-16 visible updates/sec in 60 Hz raw tests. Explicit area interest with `FusionInterestArea.base_send_rate = 1` increased raw cadence to about 20-21 visible updates/sec at 30 Hz and about 30-32 visible updates/sec at 60 Hz, but it also raised bandwidth dramatically. In the final two-client comparison, area interest cost roughly 58-68 kbps/client instead of hundreds of bps/client. A doubled raw update rate cannot explain a roughly 100x bandwidth increase by itself; the explicit area-interest path/payload behavior appears to account for most of the bandwidth jump in the tiny two-player test.
 
 So, for raw sync cadence: area interest enabled with `base_send_rate = 1` is faster, but much heavier. Area interest disabled is cheaper, but lower cadence. `base_send_rate = 0` and `base_send_rate = 2` were worse than `base_send_rate = 1`. `DefaultPriority = 1` did not materially improve cadence or bandwidth. `root_min_position_error = 0.1` improves pixel precision but did not fix cadence. `root_snap_distance = 5.0` caused ordinary corrections to snap visibly, so snap distance should stay high enough for normal correction distances.
 
@@ -1905,14 +1983,15 @@ If this becomes a developer support report, ask:
 
 1. In Fusion Godot 3 shared authority, what is the expected effective send/apply cadence for `FusionSharedReplicator` root transform replication when `RoomSendRate = 60`, `ClientSendRate = 60`, `AuthoritySendRate = 60`, and `update_interval = 1`?
 2. Why would a `CharacterBody2D` root with smoothing disabled visibly change at ~15-16 Hz under a 60 Hz room send rate?
-3. Does `FusionInterestArea.base_send_rate = 1` override this cadence for root replication?
-4. How does `fusion/serialization/float_compression` affect 2D pixel positions?
-5. Are `root_min_position_error` and `root_min_rotation_error` intended for public use, and should they be exposed/documented?
-6. Is built-in root transform replication intended for pixel-art 2D character controllers, or should this use custom replicated properties plus local render interpolation?
+3. Why can `Fusion.rpc(...)` deliver a 30/sec diagnostic signal with no sequence gaps while the replicated root transform only applies at about 10-11/sec under the same 30 Hz room?
+4. Does `FusionInterestArea.base_send_rate = 1` override this cadence for root replication?
+5. How does `fusion/serialization/float_compression` affect 2D pixel positions?
+6. Are `root_min_position_error` and `root_min_rotation_error` intended for public use, and should they be exposed/documented?
+7. Is built-in root transform replication intended for pixel-art 2D character controllers, or should this use custom replicated properties plus local render interpolation?
 
 ## Final Concise Summary
 
-Problem: raw remote root updates were arriving/applying below the configured Photon/Fusion room send rate. With 30 Hz networking and default/global root replication, raw remote motion was around 10-11 visible updates/sec in the no-smoothing tests. This was not caused by internet speed, GPU performance, V-Sync, Godot FPS, physics tick rate, or `DefaultPriority`.
+Problem: raw remote root updates were arriving/applying below the configured Photon/Fusion room send rate. With 30 Hz networking and default/global root replication, raw remote motion was around 10-11 visible updates/sec in the no-smoothing tests. A separate `Fusion.rpc(...)` diagnostic signal and remote-only RPC-position marker delivered/applied about 30 updates/sec with no sequence gaps in the same room, so this is not caused by internet speed, GPU performance, V-Sync, Godot FPS, physics tick rate, `DefaultPriority`, or general Photon room delivery.
 
 Raw sync-rate finding: explicit area interest with `FusionInterestArea.base_send_rate = 1` increases raw update cadence, but in the tiny two-player test it mostly increased send frequency because there were no far-away objects to cull. The recommended movement baseline chooses low bandwidth plus local interpolation instead of forcing maximum raw cadence. Production-scale area interest should still be added/tuned separately for culling many players/objects:
 
