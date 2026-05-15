@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://cab8m5d2fn6io"
-path="res://.godot/imported/error.svg-705e5c98918df29c10ab572690469245.ctex"
+path="res://.godot/imported/experience_error_screen.svg-8a9fffdfbb3c04e94e195796eb169b68.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://virtu_machines/_error/error.svg"
-dest_files=["res://.godot/imported/error.svg-705e5c98918df29c10ab572690469245.ctex"]
+source_file="res://core/experience_error_screen/experience_error_screen.svg"
+dest_files=["res://.godot/imported/experience_error_screen.svg-8a9fffdfbb3c04e94e195796eb169b68.ctex"]
 
 [params]
 

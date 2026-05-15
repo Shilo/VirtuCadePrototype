@@ -5,7 +5,7 @@
 [ext_resource type="PackedScene" uid="uid://61td2etp34mc" path="res://world/map/map.tscn" id="4_1bvp3"]
 [ext_resource type="PackedScene" uid="uid://cs08r5tcyhxyn" path="res://world/player/player.tscn" id="5_lquwl"]
 [ext_resource type="PackedScene" uid="uid://f4ur7hqkkmey" path="res://interactables/door/door.tscn" id="6_7mycd"]
-[ext_resource type="PackedScene" uid="uid://bxdvyu16jsbmf" path="res://interactables/virtu_machine/virtu_machine.tscn" id="7_272bh"]
+[ext_resource type="PackedScene" uid="uid://bxdvyu16jsbmf" path="res://interactables/machine/machine.tscn" id="7_272bh"]
 
 [node name="Main" type="Control" unique_id=1277039837]
 layout_mode = 3
@@ -33,11 +33,11 @@ texture = ExtResource("3_1bvp3")
 
 [node name="Player" parent="World" unique_id=1073347646 instance=ExtResource("5_lquwl")]
 
-[node name="VirtuMachine" parent="World" unique_id=2116744642 instance=ExtResource("7_272bh")]
+[node name="Machine" parent="World" unique_id=2116744642 instance=ExtResource("7_272bh")]
 position = Vector2(40, 1)
 target_name = "screensaver"
 
-[node name="VirtuMachine2" parent="World" unique_id=1431310349 instance=ExtResource("7_272bh")]
+[node name="Machine2" parent="World" unique_id=1431310349 instance=ExtResource("7_272bh")]
 position = Vector2(-40, 1)
 target_name = "rock_n_roll"
 

@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://bvcvrjks32y0v"]
 
-[ext_resource type="Script" uid="uid://cxug0etq6cqh1" path="res://virtu_machines/screensaver/screensaver.gd" id="1_in61b"]
+[ext_resource type="Script" uid="uid://cxug0etq6cqh1" path="res://experiences/screensaver/screensaver.gd" id="1_in61b"]
 [ext_resource type="Texture2D" uid="uid://bvamry6nm2hut" path="res://icon.svg" id="2_wyeo1"]
 
 [node name="Screensaver" type="Node2D" unique_id=462786916]

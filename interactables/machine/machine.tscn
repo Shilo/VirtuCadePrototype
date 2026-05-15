@@ -1,11 +1,11 @@
 [gd_scene format=3 uid="uid://bxdvyu16jsbmf"]
 
-[ext_resource type="Script" uid="uid://dtu86pdmj4kai" path="res://interactables/virtu_machine/virtu_machine.gd" id="1_wwe0d"]
+[ext_resource type="Script" uid="uid://dtu86pdmj4kai" path="res://interactables/machine/machine.gd" id="1_wwe0d"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_272bh"]
 size = Vector2(32, 48)
 
-[node name="VirtuMachine" type="Area2D" unique_id=1431310349]
+[node name="Machine" type="Area2D" unique_id=1431310349]
 script = ExtResource("1_wwe0d")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=266839248]

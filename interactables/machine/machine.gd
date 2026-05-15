@@ -1,4 +1,4 @@
-class_name VirtuMachine extends Area2D
+class_name Machine extends Area2D
 
 @export var target_name: String
 
@@ -11,4 +11,4 @@ func use(player: Player):
 		push_error("[" + str(self) + "] Player is null.")
 		return
 	
-	VirtuMachineManager.load(target_name)
+	ExperienceManager.load_experience(target_name)
