@@ -4,7 +4,7 @@ Living debug log for the Photon Fusion 3 for Godot shared-authority test project
 Keep this file updated until the lag/cadence cause is found. If no solution is found,
 this should become the report sent to Photon/Fusion developers.
 
-Last updated: 2026-05-15 08:00 PDT
+Last updated: 2026-05-15 08:20 PDT
 
 ## Project Context
 
@@ -21,6 +21,7 @@ Last updated: 2026-05-15 08:00 PDT
 Files currently modified for diagnostics:
 
 - `core/network/network_manager/network_manager.gd`
+- `core/network/network_test_profile.gd`
 - `world/player/player.gd`
 - `world/player/player.tscn`
 - `project.godot`
@@ -60,13 +61,49 @@ Finding:
 
 Status: solved.
 
-## Official Sample Comparison
+## Official Sample Benchmark Plan
 
-The Photon starter sample is 3D, so its exact tuning may not translate directly to pixel art/2D. Still, useful comparisons:
+Status: planned after the current RPC pulse test and region checks.
+
+Official Godot sample targets available locally:
+
+1. Starter sample:
+   - Path: `C:\Users\shilo\Downloads\photon-fusion-godot-starter_3.0.0.407-2`
+   - Project file: `project.godot`
+   - Default region in sample project: `eu`
+   - Candidate scenes/scripts:
+     - `1-third_person_character`
+     - `2-platformer`
+     - `3-shooter`
+   - Player movement roots are `CharacterBody3D` objects with `FusionSharedReplicator`.
+
+2. Racing starter kit:
+   - Path: `C:\Users\shilo\Downloads\photon-fusion-godot-starter-kit-racing_3.0.0.407`
+   - Project file: `project.godot`
+   - Default region in sample project: `eu`
+   - Candidate scenes/scripts:
+     - `scenes/main.tscn`
+     - `scripts/vehicle.gd`
+   - Vehicle roots are `RigidBody3D` objects with `FusionSharedReplicator`.
+
+Why this matters:
+
+- If Photon's own samples show similar default raw update rates, then our project is probably seeing normal/default FusionSharedReplicator behavior.
+- If Photon's own samples show clean 30 raw root updates/sec at default settings, then our project setup, root type, scene configuration, or diagnostic method is suspect.
+- The starter sample is 3D and the racing kit uses rigid bodies, so neither is a perfect match for our 2D pixel-art `CharacterBody2D`, but they are still useful default benchmarks.
+
+Benchmark logging target:
+
+- Add the same style of `[NetDiag]` and `[PlayerDiag]` logs to each sample without changing its default gameplay settings.
+- Log the sample's default room config, region, `FusionSharedReplicator` root settings, FPS/physics TPS, RTT, bandwidth, and remote root position changes/sec.
+- Use smoothing-disabled raw tests only as a second pass. First pass should capture the sample's true default behavior.
+- Avoid adding our smoothing/root tuning to the samples until after their default baseline is measured.
+
+Known sample pattern:
 
 - Player scenes use `FusionSharedReplicator`.
 - Player scenes set `root_replication_mode = 1` / `AUTO`.
-- The sample generally leaves smoothing/interpolation defaults alone.
+- The samples generally leave smoothing/interpolation defaults alone.
 - Sample player scripts disable Godot physics interpolation on remote player roots:
 
 ```gdscript
@@ -897,9 +934,9 @@ The original visual lag was primarily caused by evaluating raw replicated root u
 
 ## Confirmation Matrix: Profile-Based Retests
 
-Status: ready to run.
+Status: speed tests completed; next discovery profile ready to run.
 
-Current active profile after the speed tests: `Profile.PRODUCTION_BASELINE`.
+Current active profile after adding the RPC pulse discovery: `Profile.RPC_PULSE_RAW_DEFAULT`.
 
 To avoid hand-mixing settings, network test profiles now live in:
 
@@ -910,7 +947,7 @@ core/network/network_test_profile.gd
 Change only this line before each run:
 
 ```gdscript
-const ACTIVE_PROFILE := Profile.PRODUCTION_BASELINE
+const ACTIVE_PROFILE := Profile.RPC_PULSE_RAW_DEFAULT
 ```
 
 The room name is automatically changed to `lobby_<profile_id>`, so each profile gets a fresh room config after both clients restart. Run both clients from the same project copy after changing the active profile.
@@ -925,6 +962,40 @@ For each profile:
 - Record `remote_pos_changes_per_sec`, `avg_change_ms`, `avg_step_px`, `sent_bps`, `recv_bps`, and subjective feel.
 
 Recommended run order:
+
+Next discovery check:
+
+1. `Profile.RPC_PULSE_RAW_DEFAULT`
+   - Purpose: test whether Fusion's RPC route can deliver a simple 30/sec signal while default root replication still shows only about 10-11 raw position changes/sec.
+   - Settings: 30/30/30 send rates, priority 2, update interval 1, no area interest, speed 1x.
+   - Diagnostic-only changes: `root_smoothing = false`, `rpc_pulse_hz = 30`.
+   - Read these fields on the remote moving player:
+     - `remote_pos_changes_per_sec`: how often the remote root visibly changed.
+     - `rpc_pulses_per_sec`: how often the separate diagnostic RPC arrived.
+     - `avg_rpc_ms`: average time between diagnostic RPC arrivals.
+     - `rpc_seq_gaps`: missed diagnostic RPC sequence numbers.
+     - `avg_rpc_root_delta_px`: distance between the position carried by the RPC and the remote root's currently displayed position.
+
+How to read the RPC pulse test:
+
+- If `rpc_pulses_per_sec` is near 30 but `remote_pos_changes_per_sec` stays near 10-11, the room/transport can deliver a 30/sec signal and the problem is specifically the built-in root replication/apply path.
+- If both `rpc_pulses_per_sec` and `remote_pos_changes_per_sec` are near 10-11, the problem is more general: outbound scheduling, RPC transport throttling, room-level delivery, or a shared Fusion update limit.
+- If `rpc_seq_gaps` is high, the unreliable RPC stream is dropping messages. That would weaken this test, and we should rerun with reliable or lower-rate pulses.
+- This test does not prove RPC is the correct production movement solution. It is only a fork-in-the-road diagnostic.
+
+Planned region check after the RPC pulse test:
+
+1. Current control: fixed `us` / USA.
+2. Next: `Best Region`.
+3. Then: the farthest available region from the client's measured Photon region list.
+
+Region-test rules:
+
+- Do not mix a region change with any other setting change.
+- Both clients must connect to the same resolved region, or they may end up in separate Photon rooms with the same room name.
+- Use a fresh room name per region/profile.
+- Compare `rtt`, `remote_pos_changes_per_sec`, `rpc_pulses_per_sec`, `avg_rpc_ms`, `rpc_seq_gaps`, `sent_bps`, and `recv_bps`.
+- If `Best Region` resolves to `us`, that is expected from a US test machine and does not prove region is irrelevant.
 
 Speed sensitivity check:
 
