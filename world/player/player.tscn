@@ -30,7 +30,6 @@ shape = SubResource("CapsuleShape2D_onrkg")
 owner_mode = 1
 interest_mode = 1
 root_replication_mode = 1
-root_smooth_time = 0.08
 root_snap_distance = 100.0
 unique_name_in_owner = true
 process_priority = -2147483647
@@ -38,5 +37,6 @@ process_physics_priority = -2147483647
 
 [node name="FusionInterestArea" type="FusionInterestArea" parent="." unique_id=127965992]
 orientation = 0
+grid_size = 11
 decay_mode = 0
 unique_name_in_owner = true
