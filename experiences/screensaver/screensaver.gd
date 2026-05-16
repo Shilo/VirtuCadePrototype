@@ -9,12 +9,15 @@ var velocity: Vector2 = Vector2.ZERO
 
 
 func _ready() -> void:
-	logo.replicator.authority_changed.connect(func(__): _refresh_authority_state())
-	Fusion.room_joined.connect(_refresh_authority_state)
+	logo.replicator.authority_changed.connect(_refresh_authority_state, ConnectFlags.CONNECT_DEFERRED)
+	Fusion.room_joined.connect(_refresh_authority_state, ConnectFlags.CONNECT_DEFERRED)
+	Fusion.room_left.connect(_refresh_authority_state, ConnectFlags.CONNECT_DEFERRED)
+	Fusion.player_joined.connect(_refresh_authority_state, ConnectFlags.CONNECT_DEFERRED)
+	Fusion.player_left.connect(_refresh_authority_state, ConnectFlags.CONNECT_DEFERRED)
 	_refresh_authority_state()
 
 
-func _refresh_authority_state() -> void:
+func _refresh_authority_state(__: Variant = null, ___: Variant = null) -> void:
 	var has_authority_in_room := logo.replicator.has_authority() and Fusion.is_in_room()
 	set_process(has_authority_in_room)
 	
