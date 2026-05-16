@@ -8,3 +8,4 @@ layer = 2
 script = ExtResource("1_h2hj4")
 
 [node name="ConnectionScreen" parent="." unique_id=594658929 instance=ExtResource("2_h2hj4")]
+color = Color(0.0756, 0.08522, 0.12, 1)
