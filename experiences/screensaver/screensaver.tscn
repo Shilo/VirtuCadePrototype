@@ -5,10 +5,13 @@
 [ext_resource type="Texture2D" uid="uid://bvamry6nm2hut" path="res://icon.svg" id="2_wyeo1"]
 
 [sub_resource type="FusionReplicationConfig" id="FusionReplicationConfig_jc8lb"]
-property_count = 1
+property_count = 2
 properties/0/path = NodePath(":modulate")
 properties/0/max_array_capacity = 0
 properties/0/interface_tag = ""
+properties/1/path = NodePath(":velocity")
+properties/1/max_array_capacity = 0
+properties/1/interface_tag = ""
 
 [node name="Screensaver" type="Node2D" unique_id=462786916]
 script = ExtResource("1_in61b")

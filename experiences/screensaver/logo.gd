@@ -2,6 +2,7 @@ class_name ScreensaverLogo extends Sprite2D
 
 @onready var replicator: FusionSharedReplicator = %FusionSharedReplicator
 
+var velocity: Vector2 = Vector2.ZERO
 var _corner_tween: Tween
 
 

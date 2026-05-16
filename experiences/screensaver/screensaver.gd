@@ -5,32 +5,31 @@ const PLAYFIELD_SIZE := Vector2(1280.0, 720.0)
 
 @onready var logo: ScreensaverLogo = %Logo
 
-var velocity: Vector2 = Vector2.ZERO
-
 
 func _ready() -> void:
 	logo.replicator.authority_changed.connect(_refresh_authority_state, ConnectFlags.CONNECT_DEFERRED)
-	Fusion.room_joined.connect(_refresh_authority_state, ConnectFlags.CONNECT_DEFERRED)
-	Fusion.room_left.connect(_refresh_authority_state, ConnectFlags.CONNECT_DEFERRED)
-	Fusion.player_joined.connect(_refresh_authority_state, ConnectFlags.CONNECT_DEFERRED)
+	Fusion.room_joined.connect(func(): _start_logo(); _refresh_authority_state(), ConnectFlags.CONNECT_DEFERRED)
 	Fusion.player_left.connect(_refresh_authority_state, ConnectFlags.CONNECT_DEFERRED)
 	_refresh_authority_state()
+	_start_logo()
 
 
 func _refresh_authority_state(__: Variant = null, ___: Variant = null) -> void:
 	var has_authority_in_room := logo.replicator.has_authority() and Fusion.is_in_room()
 	set_process(has_authority_in_room)
-	
-	if not has_authority_in_room:
+
+
+func _start_logo() -> void:
+	if not logo.replicator.has_authority() or not Fusion.is_in_room():
 		return
-	if velocity != Vector2.ZERO:
+	if logo.velocity != Vector2.ZERO:
 		return
 
 	var dir := Vector2(
 		1.0 if randf() < 0.5 else -1.0,
 		1.0 if randf() < 0.5 else -1.0,
 	)
-	velocity = dir * SPEED
+	logo.velocity = dir * SPEED
 	_recolor()
 
 
@@ -39,6 +38,7 @@ func _process(delta: float) -> void:
 	var min_pos := half
 	var max_pos := PLAYFIELD_SIZE - half
 
+	var velocity := logo.velocity
 	var new_pos := logo.position + velocity * delta
 	var bounced_x := false
 	var bounced_y := false
@@ -64,6 +64,7 @@ func _process(delta: float) -> void:
 	logo.position = new_pos
 
 	if bounced_x or bounced_y:
+		logo.velocity = velocity
 		_recolor()
 	if bounced_x and bounced_y:
 		logo.play_corner_hit()
