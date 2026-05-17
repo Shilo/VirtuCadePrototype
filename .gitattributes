@@ -1,2 +1,18 @@
 # Normalize EOL for all files that Git considers text files.
 * text=auto eol=lf
+
+# Keep engine binaries, export templates, and binary assets byte-for-byte.
+*.zip binary -eol
+*.wasm binary -eol
+*.so binary -eol
+*.dll binary -eol
+*.dylib binary -eol
+*.exe binary -eol
+*.pck binary -eol
+*.ttf binary -eol
+*.otf binary -eol
+*.png binary -eol
+*.jpg binary -eol
+*.jpeg binary -eol
+*.webp binary -eol
+*.ico binary -eol
