@@ -1,0 +1,96 @@
+name: Build Godot Web Export
+
+on:
+  workflow_dispatch:
+    inputs:
+      godot_version:
+        description: Godot version to download
+        required: true
+        default: "4.6"
+      export_preset:
+        description: Godot export preset to build
+        required: true
+        default: "Web"
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: github-pages
+  cancel-in-progress: false
+
+env:
+  GODOT_STATUS: stable
+  GODOT_VERSION: ${{ inputs.godot_version }}
+  EXPORT_PRESET: ${{ inputs.export_preset }}
+  EXPORT_DIR: build/web
+
+jobs:
+  build:
+    name: Build web export
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
+      - name: Install Godot
+        run: |
+          set -euo pipefail
+
+          download_url="https://github.com/godotengine/godot-builds/releases/download/${GODOT_VERSION}-${GODOT_STATUS}/Godot_v${GODOT_VERSION}-${GODOT_STATUS}_linux.x86_64.zip"
+          curl --fail --location --retry 3 --output godot.zip "$download_url"
+          unzip -q godot.zip -d godot
+          mv "godot/Godot_v${GODOT_VERSION}-${GODOT_STATUS}_linux.x86_64" godot/godot
+          chmod +x godot/godot
+          echo "${GITHUB_WORKSPACE}/godot" >> "$GITHUB_PATH"
+
+      - name: Point export preset at CI templates
+        run: |
+          set -euo pipefail
+
+          debug_template="${GITHUB_WORKSPACE}/addons/fusion/export_templates/godot.web.template_debug.wasm32.nothreads.dlink.zip"
+          release_template="${GITHUB_WORKSPACE}/addons/fusion/export_templates/godot.web.template_release.wasm32.nothreads.dlink.zip"
+
+          test -f "$debug_template"
+          test -f "$release_template"
+
+          sed -i "s|^custom_template/debug=.*|custom_template/debug=\"${debug_template}\"|" export_presets.cfg
+          sed -i "s|^custom_template/release=.*|custom_template/release=\"${release_template}\"|" export_presets.cfg
+
+      - name: Import project
+        run: godot --headless --path "$GITHUB_WORKSPACE" --import --quit
+
+      - name: Export web build
+        run: |
+          set -euo pipefail
+
+          rm -rf "$EXPORT_DIR"
+          mkdir -p "$EXPORT_DIR"
+
+          godot --headless --path "$GITHUB_WORKSPACE" --export-release "$EXPORT_PRESET" "$EXPORT_DIR/index.html"
+          test -f "$EXPORT_DIR/index.html"
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: ${{ env.EXPORT_DIR }}
+
+  deploy:
+    name: Deploy to GitHub Pages
+    runs-on: ubuntu-latest
+    needs: build
+
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v5
