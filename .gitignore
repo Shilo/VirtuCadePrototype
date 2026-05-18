@@ -1,10 +1,9 @@
 # Godot 4+ specific ignores
 .godot/
 /android/
+
 .export/
-
-# Fusion/Godot may create Windows DLL backup files while the editor DLL is loaded.
 /addons/fusion/bin/~*.dll
-
-# Local ProjectSettings override — holds secrets like fusion/connection/app_id.
 /override.cfg
+docs/fusion_api_reference.html
+docs/fusion_api_reference.raw.json
