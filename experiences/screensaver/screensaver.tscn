@@ -22,7 +22,7 @@ texture = ExtResource("2_wyeo1")
 script = ExtResource("2_bg3o8")
 
 [node name="FusionSharedReplicator" type="FusionSharedReplicator" parent="Logo" unique_id=247012393]
-owner_mode = 3
+owner_mode = 2
 replication_config = SubResource("FusionReplicationConfig_jc8lb")
 root_replication_mode = 1
 root_snap_distance = 100.0
