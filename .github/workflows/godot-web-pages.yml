@@ -78,6 +78,7 @@ jobs:
           [fusion]
 
           connection/app_id="${FUSION_APP_ID}"
+          debug/log_level=0
           EOF
 
           echo "Wrote override.cfg ($(wc -c < override.cfg) bytes); app_id length=${#FUSION_APP_ID}"
