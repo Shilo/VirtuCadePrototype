@@ -6,4 +6,6 @@ func _ready():
 
 func _on_room_joined():
 	var player = %FusionSpawner.spawn()
-	player.global_position = %Spawn.global_position
+	var angle := randf() * TAU
+	var offset := Vector2(cos(angle), sin(angle)) * 16.0
+	player.global_position = %Spawn.global_position + offset
