@@ -63,6 +63,23 @@ jobs:
           sed -i "s|^custom_template/debug=.*|custom_template/debug=\"${debug_template}\"|" export_presets.cfg
           sed -i "s|^custom_template/release=.*|custom_template/release=\"${release_template}\"|" export_presets.cfg
 
+      - name: Write override.cfg from secrets
+        env:
+          FUSION_APP_ID: ${{ secrets.FUSION_APP_ID }}
+        run: |
+          set -euo pipefail
+
+          if [ -z "${FUSION_APP_ID}" ]; then
+            echo "FUSION_APP_ID secret is not set; skipping override.cfg generation." >&2
+            exit 0
+          fi
+
+          cat > override.cfg <<EOF
+          [fusion]
+
+          connection/app_id="${FUSION_APP_ID}"
+          EOF
+
       - name: Import project
         run: godot --headless --path "$GITHUB_WORKSPACE" --import --quit
 

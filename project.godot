@@ -30,7 +30,7 @@ window/stretch/aspect="expand"
 
 [fusion]
 
-connection/app_id="ec1a0329-e20f-429a-a9b3-e6a59520d44f"
+connection/app_id="Set via override.cfg or FUSION_APP_ID GitHub secret"
 
 [input]
 
