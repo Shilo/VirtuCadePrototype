@@ -2,18 +2,15 @@
 
 [ext_resource type="Script" uid="uid://pp28ple5n7x0" path="res://world/lobby/lobby.gd" id="1_cuuia"]
 [ext_resource type="PackedScene" uid="uid://ckpxkiuns3i53" path="res://ui/ui.tscn" id="2_2ii5k"]
-[ext_resource type="PackedScene" uid="uid://cs08r5tcyhxyn" path="res://world/player/player.tscn" id="2_cuuia"]
 [ext_resource type="Texture2D" uid="uid://nxkv4nmu3jiu" path="res://world/map/background.png" id="3_gc6gh"]
 [ext_resource type="PackedScene" uid="uid://61td2etp34mc" path="res://world/map/map.tscn" id="4_aeea4"]
 [ext_resource type="PackedScene" uid="uid://bxdvyu16jsbmf" path="res://world/interactables/machine/machine.tscn" id="6_1qdmm"]
+[ext_resource type="Script" uid="uid://dm3udxu16cmm" path="res://core/network/virtu_spawner/virtu_spawner.gd" id="7_cuuia"]
 [ext_resource type="PackedScene" uid="uid://f4ur7hqkkmey" path="res://world/interactables/door/door.tscn" id="7_r32gm"]
+[ext_resource type="PackedScene" uid="uid://cs08r5tcyhxyn" path="res://world/player/player.tscn" id="8_player"]
 
 [node name="Lobby" type="Node" unique_id=1214030190]
 script = ExtResource("1_cuuia")
-
-[node name="FusionSpawner" type="FusionSpawner" parent="." unique_id=1121108414]
-spawnable_scenes = Array[PackedScene]([ExtResource("2_cuuia")])
-unique_name_in_owner = true
 
 [node name="UI" parent="." unique_id=791075614 instance=ExtResource("2_2ii5k")]
 
@@ -61,5 +58,9 @@ position = Vector2(-176, 144)
 use_door = NodePath("../Door")
 up_door = NodePath("../Door2")
 
-[node name="Spawn" type="Marker2D" parent="World" unique_id=924513256]
+[node name="VirtuSpawner" type="Marker2D" parent="World" unique_id=2084214907]
 unique_name_in_owner = true
+script = ExtResource("7_cuuia")
+spawnable_scenes = Array[PackedScene]([ExtResource("8_player")])
+random_offset = Vector2(64, 0)
+metadata/_custom_type_script = "uid://dm3udxu16cmm"

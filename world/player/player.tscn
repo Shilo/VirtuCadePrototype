@@ -8,6 +8,8 @@ radius = 8.0
 height = 32.0
 
 [node name="Player" type="CharacterBody2D" unique_id=1073347646]
+collision_layer = 2
+collision_mask = 1
 script = ExtResource("1_onrkg")
 
 [node name="Icon" type="Sprite2D" parent="." unique_id=1911356943]
