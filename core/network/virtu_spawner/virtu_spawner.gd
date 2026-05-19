@@ -15,8 +15,8 @@ func _enter_tree() -> void:
 
 
 func spawn() -> Node2D:
-	return fusion_spawner.spawn(null, func(node: Node2D) -> void:
-		node.global_position = global_position + Vector2(
+	return fusion_spawner.spawn(null, func(__, player: Player) -> void:
+		player.global_position = global_position + Vector2(
 			randf_range(-random_offset.x, random_offset.x),
 			randf_range(-random_offset.y, random_offset.y),
 		)
