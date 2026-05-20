@@ -73,15 +73,15 @@ jobs:
           mkdir -p .godot
           printf '%s\n' 'res://addons/fusion/fusion.gdextension' > .godot/extension_list.cfg
 
-      - name: Write override.cfg from secrets
+      - name: Apply Fusion app id from secrets
         env:
           FUSION_APP_ID: ${{ secrets.FUSION_APP_ID }}
         run: |
           set -euo pipefail
 
           if [ -z "${FUSION_APP_ID}" ]; then
-            echo "FUSION_APP_ID secret is not set; skipping override.cfg generation." >&2
-            exit 0
+            echo "FUSION_APP_ID secret is not set." >&2
+            exit 1
           fi
 
           cat > override.cfg <<EOF
@@ -91,7 +91,31 @@ jobs:
           debug/log_level=0
           EOF
 
-          echo "Wrote override.cfg ($(wc -c < override.cfg) bytes); app_id length=${#FUSION_APP_ID}"
+          python3 <<'PY'
+          from pathlib import Path
+          import os
+          import re
+
+          def godot_string(value: str) -> str:
+              return '"' + value.replace("\\", "\\\\").replace('"', '\\"') + '"'
+
+          path = Path("project.godot")
+          text = path.read_text(encoding="utf-8")
+          line = "connection/app_id=" + godot_string(os.environ["FUSION_APP_ID"])
+          match = re.search(r"(?ms)^\[fusion\]\n(?P<body>.*?)(?=^\[|\Z)", text)
+          if match is None:
+              text = text.rstrip() + "\n\n[fusion]\n\n" + line + "\n"
+          else:
+              body = match.group("body")
+              if re.search(r"(?m)^connection/app_id=", body):
+                  body = re.sub(r"(?m)^connection/app_id=.*$", line, body)
+              else:
+                  body = line + "\n" + body
+              text = text[:match.start("body")] + body + text[match.end("body"):]
+          path.write_text(text, encoding="utf-8")
+          PY
+
+          echo "Applied Fusion app id to CI project settings; app_id length=${#FUSION_APP_ID}"
 
       - name: Import project
         run: godot --headless --path "$GITHUB_WORKSPACE" --import --quit
