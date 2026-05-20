@@ -63,6 +63,16 @@ jobs:
           sed -i "s|^custom_template/debug=.*|custom_template/debug=\"${debug_template}\"|" export_presets.cfg
           sed -i "s|^custom_template/release=.*|custom_template/release=\"${release_template}\"|" export_presets.cfg
 
+      - name: Register Fusion GDExtension
+        run: |
+          set -euo pipefail
+
+          test -f addons/fusion/fusion.gdextension
+          test -f addons/fusion/bin/libfusion.linux.editor.x86_64.release.so
+
+          mkdir -p .godot
+          printf '%s\n' 'res://addons/fusion/fusion.gdextension' > .godot/extension_list.cfg
+
       - name: Write override.cfg from secrets
         env:
           FUSION_APP_ID: ${{ secrets.FUSION_APP_ID }}
