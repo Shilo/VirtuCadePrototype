@@ -84,38 +84,7 @@ jobs:
             exit 1
           fi
 
-          cat > override.cfg <<EOF
-          [fusion]
-
-          connection/app_id="${FUSION_APP_ID}"
-          debug/log_level=0
-          EOF
-
-          python3 <<'PY'
-          from pathlib import Path
-          import os
-          import re
-
-          def godot_string(value: str) -> str:
-              return '"' + value.replace("\\", "\\\\").replace('"', '\\"') + '"'
-
-          path = Path("project.godot")
-          text = path.read_text(encoding="utf-8")
-          line = "connection/app_id=" + godot_string(os.environ["FUSION_APP_ID"])
-          match = re.search(r"(?ms)^\[fusion\]\n(?P<body>.*?)(?=^\[|\Z)", text)
-          if match is None:
-              text = text.rstrip() + "\n\n[fusion]\n\n" + line + "\n"
-          else:
-              body = match.group("body")
-              if re.search(r"(?m)^connection/app_id=", body):
-                  body = re.sub(r"(?m)^connection/app_id=.*$", line, body)
-              else:
-                  body = line + "\n" + body
-              text = text[:match.start("body")] + body + text[match.end("body"):]
-          path.write_text(text, encoding="utf-8")
-          PY
-
-          echo "Applied Fusion app id to CI project settings; app_id length=${#FUSION_APP_ID}"
+          godot --headless --path "$GITHUB_WORKSPACE" --script "$GITHUB_WORKSPACE/.github/scripts/apply_fusion_app_id.gd"
 
       - name: Import project
         run: godot --headless --path "$GITHUB_WORKSPACE" --import --quit
